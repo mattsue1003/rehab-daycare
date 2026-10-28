@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日照復能管理系統</title>
+<meta name="description" content="長照日間照顧中心復能系統：評估、開立復能處方、照服員執行紀錄、再評估與修正，並依評鑑基準自動檢核。">
+<style>
+:root{
+  --bg:#f5f6f3; --surface:#ffffff; --surface2:#f0f2ee; --line:#dfe3dc; --text:#1f2a24; --muted:#5f6b64;
+  --pri:#2f7d5b; --pri-d:#22654a; --pri-l:#e3f1ea; --accent:#c9792b;
+  --ok:#2f7d5b; --ok-l:#e3f1ea; --warn:#b7791f; --warn-l:#fbf0dc; --err:#b9403a; --err-l:#f9e3e1; --purple:#6b4fa0; --purple-l:#efe9f8;
+  --radius:12px; --shadow:0 1px 2px rgba(20,40,30,.06),0 2px 8px rgba(20,40,30,.05);
+  --font:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1c2420; --surface2:#232d28; --line:#33403a; --text:#e6ece8; --muted:#9aa8a0;
+  --pri:#5fbf92; --pri-d:#7dd3aa; --pri-l:#21392e; --ok:#5fbf92; --ok-l:#21392e; --warn:#e0a84a; --warn-l:#3a3020; --err:#ec7a72; --err-l:#3d2422; --purple:#b49be0; --purple-l:#2e2640; color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#141a17; --surface:#1c2420; --surface2:#232d28; --line:#33403a; --text:#e6ece8; --muted:#9aa8a0; --pri:#5fbf92; --pri-d:#7dd3aa; --pri-l:#21392e; --ok:#5fbf92; --ok-l:#21392e; --warn:#e0a84a; --warn-l:#3a3020; --err:#ec7a72; --err-l:#3d2422; --purple:#b49be0; --purple-l:#2e2640; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.55}
+a{color:var(--pri)}
+.ic{flex:none;vertical-align:middle}
+#layout{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+#side{background:var(--surface);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:16px 12px;overflow:auto}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 16px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--pri);color:#fff;display:grid;place-items:center}
+.b1{font-weight:700;font-size:16px}.b2{font-size:12px;color:var(--muted)}
+#side nav{display:flex;flex-direction:column;gap:2px}
+#side nav a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;font-weight:500}
+#side nav a:hover{background:var(--surface2)}
+#side nav a.on{background:var(--pri-l);color:var(--pri-d);font-weight:700}
+.side-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:12px 8px 0;border-top:1px solid var(--line)}
+#mainwrap{min-width:0}
+#top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--line)}
+.top-title b{font-size:20px}.top-title small{margin-left:10px;color:var(--muted)}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+#main{padding:20px 24px 80px;max-width:1280px}
+.sp{flex:1}
+.only-m{display:none}
+/* card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.card.flush{padding:0;overflow:hidden}
+.card.hl{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri-l)}
+.card.dim{opacity:.85}
+.card h2{font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 small{font-weight:400;color:var(--muted);font-size:13px}
+.card h3{font-size:15px;margin:14px 0 6px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>.card{margin-bottom:0}.grid2{margin-bottom:16px}
+.grid2.tight{gap:20px;margin:0}
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpis.sm .kpi{box-shadow:none;background:var(--surface2)}
+.k-n{font-size:30px;font-weight:700;color:var(--pri-d);line-height:1.15;font-variant-numeric:tabular-nums}.k-n small{font-size:15px;margin-left:2px}
+.k-l{font-size:13px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--surface2);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri);border-radius:3px}
+.mini-bar{display:inline-block;width:60px;height:6px;background:var(--surface2);border-radius:3px;margin-right:6px;vertical-align:middle;overflow:hidden}.mini-bar i{display:block;height:100%;background:var(--pri)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 14px;border-radius:10px;font:inherit;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap;min-height:40px}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}.btn.primary:hover{background:var(--pri-d)}
+.btn.danger{background:var(--err);border-color:var(--err);color:#fff}
+.btn.danger.ghost{background:transparent;color:var(--err);border-color:transparent}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.sm{padding:5px 10px;font-size:14px;min-height:32px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.icon-btn{border:0;background:transparent;color:var(--text);padding:8px;border-radius:8px;cursor:pointer}
+.icon-btn:hover{background:var(--surface2)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--pri) 55%,transparent);outline-offset:2px}
+/* forms */
+.inp{font:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-height:40px}
+.inp.sm{padding:4px 8px;min-height:34px;width:auto}
+.inp:focus{border-color:var(--pri);outline:none;box-shadow:0 0 0 3px var(--pri-l)}
+textarea.inp{resize:vertical}
+.inp-num{max-width:140px}
+.inp.w6{max-width:110px}
+.toolbar .inp{width:auto}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;min-width:0}
+.lbl{font-size:14px;font-weight:600;color:var(--muted)}
+.req{color:var(--err)}
+.hint{font-size:13px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}.form-grid.g3{grid-template-columns:repeat(3,1fr)}
+.span2{grid-column:span 2}.span3{grid-column:1/-1}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill input,.chk input{position:absolute;opacity:0;width:1px;height:1px}
+.pill span{display:inline-block;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:14px;min-height:36px}
+.pill input:checked+span{background:var(--pri);border-color:var(--pri);color:#fff}
+.pill input:focus-visible+span,.chk input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--pri) 55%,transparent)}
+.pills.vert{flex-direction:column}.pills.vert .pill span{border-radius:10px;width:100%;display:block}
+.chk{display:inline-flex;align-items:flex-start;gap:8px;cursor:pointer;margin:4px 12px 4px 0;position:relative}
+.chk span::before{content:"";display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-radius:5px;margin-right:8px;vertical-align:-4px;background:var(--surface)}
+.chk input:checked+span::before{background:var(--pri);border-color:var(--pri);box-shadow:inset 0 0 0 3px var(--surface)}
+.chk small{display:block;color:var(--muted);margin-left:26px}.chk small.ref{color:var(--accent)}
+.q{border-top:1px solid var(--line);padding:12px 0}.q:first-child{border-top:0;padding-top:0}
+.qh{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+.prev{font-size:13px;color:var(--accent);background:var(--warn-l);padding:1px 8px;border-radius:999px}
+.calc{font-size:20px;font-weight:700;color:var(--pri-d);padding:6px 0}
+.row-edit{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+/* table */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th,.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font-size:13px;color:var(--muted);font-weight:600;background:var(--surface2);white-space:nowrap}
+.tbl.sm th,.tbl.sm td{padding:6px 8px}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--surface2)}
+.tbl.qa td:last-child{width:200px}
+.nowrap{white-space:nowrap}
+/* misc */
+.badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);white-space:nowrap;vertical-align:1px}
+.badge.green{background:var(--ok-l);color:var(--ok);border-color:transparent}.badge.red{background:var(--err-l);color:var(--err);border-color:transparent}.badge.amber{background:var(--warn-l);color:var(--warn);border-color:transparent}.badge.purple{background:var(--purple-l);color:var(--purple);border-color:transparent}
+.empty{text-align:center;color:var(--muted);padding:24px}
+.muted{color:var(--muted)}.pad{padding:10px 0}
+.notice{background:var(--pri-l);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:15px}
+.notice.warn{background:var(--warn-l)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.sticky-bar{position:sticky;top:61px;z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
+.jump{display:flex;gap:2px;flex-wrap:wrap}.jump a{font-size:13px;padding:4px 8px;border-radius:6px;text-decoration:none}.jump a:hover{background:var(--surface2)}
+.list{margin:4px 0;padding-left:20px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;font-weight:500}
+.tabs a.on{color:var(--pri-d);border-color:var(--pri);font-weight:700}
+.info{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;margin:0}.info dt{font-size:13px;color:var(--muted)}.info dd{margin:0}
+.todo{list-style:none;margin:0;padding:0}
+.todo li{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.todo li:last-child{border:0}
+.todo .tt{flex:1}.todo .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.lv-high .dot{background:var(--err)}.lv-mid .dot{background:var(--warn)}.lv-low .dot{background:var(--muted)}
+.checks{list-style:none;padding:0;margin:0}.checks li{padding:7px 0;border-bottom:1px dashed var(--line)}.checks li.ok{color:var(--text)}.checks li.no{color:var(--err)}
+.checks li small{color:var(--muted)}.checks .det{font-size:13px;color:var(--muted);margin:2px 0 0 18px}.checks .det a{color:var(--err)}
+.cycle{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.step{flex:1;min-width:140px;background:var(--surface2);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.step small{color:var(--muted);font-size:13px}.sn{width:26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.arrow{align-self:center;color:var(--muted);font-size:20px}
+.ind .code{background:var(--pri);color:#fff;font-size:13px;padding:2px 8px;border-radius:6px}
+/* today */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.tcard.absent{opacity:.6}
+.tcard header{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.av{width:44px;height:44px;border-radius:50%;background:var(--pri-l);color:var(--pri-d);display:grid;place-items:center;font-weight:700;font-size:20px;flex:none}
+.tn{flex:1;min-width:120px}.tn b{font-size:18px;display:block}.tn small{color:var(--muted)}
+.att{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.seg{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;min-height:36px;color:var(--text)}
+.seg.on{background:var(--pri);color:#fff;border-color:var(--pri)}.seg.on.warn{background:var(--warn);border-color:var(--warn)}
+.temp{display:flex;align-items:center;gap:4px;font-size:14px;color:var(--muted)}.temp input{width:72px;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);min-height:36px}
+.temp.warn input{border-color:var(--err);background:var(--err-l)}
+.tprog{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);margin:10px 0 4px}.tprog .bar{flex:1;margin:0}
+.items{list-style:none;margin:0;padding:0}
+.it{border-top:1px solid var(--line);padding:10px 0}
+.it-main{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.it-t{flex:1;min-width:160px}.it-t b{font-size:16px}.it-t small{display:block;color:var(--muted);font-size:13px}.it-t .badge{margin-left:6px}
+.it-b{display:flex;gap:6px}
+.sbtn{border:2px solid var(--line);background:var(--surface);border-radius:10px;min-width:56px;min-height:52px;font:inherit;font-size:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;color:var(--muted)}
+.sbtn span{font-size:12px}
+.sbtn.ok.on{background:var(--ok);border-color:var(--ok);color:#fff}.sbtn.part.on{background:var(--warn);border-color:var(--warn);color:#fff}.sbtn.skip.on{background:var(--err);border-color:var(--err);color:#fff}
+.sbtn.more{font-size:13px;min-width:48px}
+.it.st-ok .it-t b{color:var(--ok)}
+.it-detail{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px}
+.how{font-size:14px;margin-bottom:10px}.warn-t{color:var(--err)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+/* grid exec */
+.grid-t{border-collapse:collapse;font-size:13px}
+.grid-t th,.grid-t td{border:1px solid var(--line);padding:4px;text-align:center;min-width:28px}
+.grid-t th{background:var(--surface2);font-weight:500}.grid-t th small{color:var(--muted)}
+.grid-t th.we{color:var(--err)}
+.grid-t .sticky{position:sticky;left:0;background:var(--surface);text-align:left;white-space:nowrap;min-width:150px;z-index:1}
+.g-ok{background:var(--ok-l);color:var(--ok);font-weight:700}.g-part{background:var(--warn-l);color:var(--warn);font-weight:700}.g-skip{background:var(--err-l);color:var(--err);font-weight:700}.g-miss{color:var(--err)}
+.legend{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.legend .g{display:inline-block;width:24px;text-align:center;border-radius:4px}
+.feed{list-style:none;margin:0;padding:0}.feed li{padding:10px 0;border-bottom:1px solid var(--line)}.feed time{color:var(--muted);font-size:13px;margin-right:8px}.feed p{margin:4px 0}.feed small{color:var(--muted)}
+/* charts */
+.charts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:16px}.charts .card{margin:0}
+.chart{width:100%;height:auto}
+.chart .cg{stroke:var(--line);stroke-width:1}.chart .ct{fill:var(--muted);font-size:10px}.chart .cv{fill:var(--text);font-weight:700}
+.chart .cl{fill:none;stroke:var(--pri);stroke-width:2.5}.chart .cd{fill:var(--surface);stroke:var(--pri);stroke-width:2.5}
+.chart .ccut{stroke:var(--err);stroke-dasharray:4 3}.chart .cut-t{fill:var(--err)}
+.chart-empty{color:var(--muted);padding:30px;text-align:center}
+/* editor */
+.edit-layout{display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start}
+.edit-side .sticky{position:sticky;top:130px}
+.ls{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}.ls b{font-variant-numeric:tabular-nums}.ls small{color:var(--muted);font-weight:400}
+.ls.flag b{color:var(--err)}
+.sugg{list-style:none;padding:0;margin:0 0 12px}.sugg li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.item-card,.case-b{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface2)}
+.ic-h{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}.ic-h .grow{flex:1;min-width:160px}.ic-h select{width:auto}
+.libs details{border-bottom:1px solid var(--line);padding:6px 0}.libs summary{cursor:pointer;font-weight:600;padding:4px 0}
+.lib{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font:inherit;font-size:14px;cursor:pointer;color:var(--text);margin:2px}
+.chip:hover{border-color:var(--pri)}.chip.hl{border-color:var(--pri);background:var(--pri-l);color:var(--pri-d)}
+/* modal & toast */
+.modal-bg{position:fixed;inset:0;background:rgba(10,20,15,.45);z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border-radius:14px;width:min(560px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal.wide{width:min(860px,100%)}
+.modal-h{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}.modal-h h3{margin:0;flex:1;font-size:18px}
+.modal-b{padding:16px 18px;overflow:auto}.modal-f{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:var(--text);color:var(--bg);padding:10px 18px;border-radius:10px;opacity:0;transform:translateY(10px);transition:.25s;max-width:90vw;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:none}.toast.err{background:var(--err);color:#fff}
+#print{display:none}
+/* responsive */
+@media (max-width:1000px){
+  .grid2,.edit-layout{grid-template-columns:1fr}.edit-side{order:-1}.edit-side .sticky{position:static}
+  .form-grid.g3{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  #layout{grid-template-columns:1fr}
+  #side{position:fixed;left:0;top:0;z-index:40;width:260px;transform:translateX(-100%);transition:.2s;box-shadow:0 0 30px rgba(0,0,0,.2)}
+  body.nav-open #side{transform:none}
+  .only-m{display:inline-flex}
+  #top{padding:10px 16px;flex-wrap:wrap}.who{width:100%;order:3}.who select{flex:1}
+  #main{padding:16px 16px 80px}
+  .form-grid,.form-grid.g3{grid-template-columns:1fr}.span2,.span3{grid-column:auto}
+  .tgrid{grid-template-columns:1fr}.row3{grid-template-columns:1fr}
+  .info{grid-template-columns:1fr}
+  .sticky-bar{top:105px}
+  .top-title small{display:block;margin:0}
+}
+/* print */
+@media print{
+  @page{size:A4;margin:14mm 12mm}
+  body{background:#fff;color:#000;font-size:11pt}
+  #layout,#modal,#toasts,[data-oth-report]{display:none!important}
+  #print{display:block}
+  .p-head{text-align:center;border-bottom:2px solid #000;margin-bottom:10px;padding-bottom:6px}
+  .p-center{font-size:12pt}.p-title{font-size:17pt;font-weight:700}.p-date{font-size:9pt;color:#444}
+  #print h3{font-size:14pt;margin:8px 0}#print h4{font-size:12pt;margin:12px 0 4px;border-left:4px solid #000;padding-left:6px}
+  #print h2{font-size:13pt;margin:10px 0 4px}
+  .p-t{width:100%;border-collapse:collapse;margin:4px 0;font-size:10pt}
+  .p-t th,.p-t td{border:1px solid #555;padding:3px 5px;text-align:left;vertical-align:top}
+  .p-t th{background:#eee;white-space:nowrap}
+  .p-sign{display:flex;gap:16px;margin-top:24px;flex-wrap:wrap}.p-sign div{flex:1;min-width:150px}.p-sign span{display:inline-block;border-bottom:1px solid #000;width:110px;height:18px}
+  .p-break{page-break-before:always}
+  .p-charts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .chart .cl{stroke:#000}.chart .cd{stroke:#000;fill:#fff}.chart .ct{fill:#333}.chart .cg{stroke:#ccc}
+  #print .card{border:1px solid #999;box-shadow:none;padding:8px;margin-bottom:8px;break-inside:avoid}
+  #print .checks li.no{color:#000;font-weight:700}#print .grid2{display:block}
+  #print .det a{color:#000;text-decoration:none}
+}
+
+</style>
+</head>
+<body>
+<div id="layout">
+  <aside id="side"></aside>
+  <div id="mainwrap">
+    <header id="top"></header>
+    <main id="main"><div class="empty">載入中…</div></main>
+  </div>
+</div>
+<div id="modal"></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="print"></div>
+<noscript>本系統需要啟用 JavaScript。</noscript>
+<script>
+/* ---- domain.js ---- */
+/* ================================================================
+   領域資料：評估量表、常模、復能處方庫、建議規則、評鑑指標
+   ================================================================ */
+
+const ROLES = ['照顧服務員','物理治療師','職能治療師','護理師','社工','個案管理/督導','營養師','語言治療師','主任/業務負責人','其他'];
+const PRESCRIBER_ROLES = ['物理治療師','職能治療師','護理師','語言治療師','營養師','個案管理/督導','主任/業務負責人'];
+const WEEKDAYS = ['','一','二','三','四','五','六','日'];
+const CMS_LEVELS = ['','第1級','第2級','第3級','第4級','第5級','第6級','第7級','第8級'];
+
+const ASSIST_LEVELS = ['獨立完成','監督/口頭提示','少量協助(<25%)','中度協助(25–50%)','大量協助(>50%)','完全依賴'];
+const TOLERANCE = ['良好','尚可','疲累','不適停止'];
+const SKIP_REASONS = ['個案請假/未到','身體不適','個案拒絕','時間不足/活動衝突','人力不足','其他'];
+
+/* ---------- 巴氏量表 Barthel Index（衛福部版描述） ---------- */
+const BARTHEL = [
+  {k:'feeding', n:'進食', opts:[[10,'自己在合理時間內（約10秒吃一口）可用筷子取食眼前食物；若需進食輔具，會自行穿脫'],[5,'需別人幫忙穿脫輔具或只會用湯匙進食'],[0,'無法自行取食或耗費時間過長']]},
+  {k:'transfer', n:'移位（輪椅↔床）', opts:[[15,'可獨立完成，包括輪椅煞車及移開腳踏板'],[10,'需要稍微協助（如輕扶以保持平衡）或需口頭指導'],[5,'可自行從床上坐起，但移位時仍需別人幫忙'],[0,'需別人幫忙方可坐起或移位']]},
+  {k:'grooming', n:'個人衛生', opts:[[5,'可獨立完成洗臉、洗手、刷牙及梳頭髮'],[0,'需要別人幫忙']]},
+  {k:'toilet', n:'如廁', opts:[[10,'可自行進出廁所，不弄髒衣物並能穿好衣服；使用便盆者可自行清理'],[5,'需幫忙保持平衡、整理衣物或使用衛生紙；使用便盆者可自取放但須他人清理'],[0,'需他人幫忙']]},
+  {k:'bathing', n:'洗澡', opts:[[5,'可獨立完成（盆浴或沐浴）'],[0,'需別人幫忙']]},
+  {k:'mobility', n:'平地走動', opts:[[15,'使用或不使用輔具皆可獨立行走50公尺以上'],[10,'需稍微扶持或口頭指導方可行走50公尺以上'],[5,'無法行走，但可獨立操作輪椅（含轉彎、進門、接近桌子床沿）並推行50公尺以上'],[0,'需別人幫忙']]},
+  {k:'stairs', n:'上下樓梯', opts:[[10,'可自行上下樓梯（可抓扶手、用拐杖）'],[5,'需要稍微幫忙或口頭指導'],[0,'無法上下樓梯']]},
+  {k:'dressing', n:'穿脫衣褲鞋襪', opts:[[10,'可自行穿脫衣服、鞋子及輔具'],[5,'在別人幫忙下，可自行完成一半以上動作'],[0,'需別人幫忙']]},
+  {k:'bowel', n:'大便控制', opts:[[10,'不會失禁，並可自行使用塞劑'],[5,'偶爾失禁（每週不超過一次）或使用塞劑時需人幫助'],[0,'需別人處理']]},
+  {k:'bladder', n:'小便控制', opts:[[10,'日夜皆不會尿失禁，或可自行使用並清理尿套'],[5,'偶爾尿失禁（每週不超過一次）或尿急，或需別人幫忙處理尿套'],[0,'需別人處理']]},
+];
+function barthelLevel(t){ if(t==null) return ''; if(t===100) return '獨立'; if(t>=91) return '輕度依賴'; if(t>=61) return '中度依賴'; if(t>=21) return '重度依賴'; return '完全依賴'; }
+
+/* ---------- 工具性日常生活 Lawton IADL（原版二分計分） ---------- */
+const IADL = [
+  {k:'phone', n:'使用電話', opts:[['獨立使用電話，含查電話簿、撥號',1],['僅可撥熟悉的電話號碼',1],['僅會接電話，不會撥電話',1],['完全不會使用電話',0]]},
+  {k:'shopping', n:'上街購物', opts:[['獨立完成所有購物需求',1],['獨立購買日常生活用品',0],['每次上街購物都需要有人陪',0],['完全不會上街購物',0]]},
+  {k:'cooking', n:'備餐', opts:[['能獨立計畫、烹煮和擺設一頓適當的飯菜',1],['如果準備好一切佐料，會做一頓適當的飯菜',0],['會將已做好的飯菜加熱',0],['需要別人把飯菜煮好、擺好',0]]},
+  {k:'housework', n:'處理家務', opts:[['能做較繁重的家事或需偶爾協助（如搬動沙發）',1],['能做較簡單的家事，如洗碗、鋪床、疊被',1],['能做家事，但不能達到可被接受的整潔程度',1],['所有家事都需要別人協助',1],['完全不會做家事',0]]},
+  {k:'laundry', n:'洗衣服', opts:[['自己清洗所有衣物',1],['只清洗小件衣物',1],['完全依賴他人',0]]},
+  {k:'transport', n:'外出（交通）', opts:[['能自己開車、騎車或搭乘大眾運輸',1],['能自己搭乘計程車，但不會搭乘大眾運輸',1],['有人陪同可搭乘大眾運輸',1],['只能在有人陪同下搭乘計程車或汽車',0],['完全不能出門',0]]},
+  {k:'meds', n:'服用藥物', opts:[['能自己負責在正確時間服用正確藥物',1],['需要提醒或協助，如事先準備好服用份量',0],['無法自己服用藥物',0]]},
+  {k:'finance', n:'處理財務', opts:[['可以獨立處理財務',1],['可處理日常購買，但需要別人協助與銀行往來或大宗買賣',1],['不能處理錢財',0]]},
+];
+
+/* ---------- 簡易心智狀態問卷 SPMSQ ---------- */
+const SPMSQ = ['今天是幾年幾月幾日？','今天是星期幾？','這是什麼地方？','您的電話號碼（或住址）是？','您幾歲了？','您的出生年月日？','現任總統是誰？','前任總統是誰？','您媽媽姓什麼？','從20減3，再一直減3下去'];
+const EDU_OPTS = [['low','小學（含）以下／不識字（容許多錯1題）'],['mid','國中～高中'],['high','高中以上（容許少錯1題）']];
+function spmsqLevel(adj){ if(adj==null) return ''; if(adj<=2) return '心智功能完好'; if(adj<=4) return '輕度心智功能障礙'; if(adj<=7) return '中度心智功能障礙'; return '重度心智功能障礙'; }
+
+/* ---------- 老人憂鬱量表 GDS-15（[題目, 計分答案]） ---------- */
+const GDS15 = [
+  ['您對目前的生活滿意嗎？','n'],['您是否減少很多活動和嗜好？','y'],['您是否覺得生活空虛？','y'],['您是否常常感到無聊？','y'],
+  ['您是否大部分時間精神都很好？','n'],['您是否害怕將有不幸的事情發生在您身上？','y'],['您是否大部分時間都感到快樂？','n'],
+  ['您是否常感到無助？','y'],['您是否比較喜歡待在家裡，而不喜歡外出做新的事？','y'],['您是否覺得您比大多數人有較多記憶的問題？','y'],
+  ['您是否覺得「現在還活著」是很好的事？','n'],['您是否覺得自己現在活得很沒有價值？','y'],['您是否覺得精力很充沛？','n'],
+  ['您是否覺得自己的處境沒有希望？','y'],['您是否覺得大部分的人都比您幸福？','y'],
+];
+
+/* ---------- 迷你營養評估簡表 MNA-SF ---------- */
+const MNASF = [
+  {k:'A', n:'過去三個月食量是否因食慾不振、消化、咀嚼或吞嚥問題而減少？', opts:[[0,'食量嚴重減少'],[1,'食量中度減少'],[2,'食量沒有改變']]},
+  {k:'B', n:'過去三個月體重下降情形', opts:[[0,'大於3公斤'],[1,'不知道'],[2,'1～3公斤'],[3,'體重沒有下降']]},
+  {k:'C', n:'行動力', opts:[[0,'臥床或依賴輪椅'],[1,'可下床或離開輪椅，但不能外出'],[2,'可以外出']]},
+  {k:'D', n:'過去三個月內有無受到心理創傷或急性疾病？', opts:[[0,'是'],[2,'否']]},
+  {k:'E', n:'神經心理問題', opts:[[0,'嚴重失智或抑鬱'],[1,'輕度失智'],[2,'沒有精神心理問題']]},
+];
+function mnaLevel(t){ if(t==null) return ''; if(t>=12) return '營養狀況正常'; if(t>=8) return '有營養不良風險'; return '營養不良'; }
+
+/* ---------- 體能常模 ---------- */
+// 30秒坐站：低於此次數＝低於同齡平均（Rikli & Jones；CDC STEADI）
+const CS30_NORM = { M:[[60,14],[65,12],[70,12],[75,11],[80,10],[85,8],[90,7]], F:[[60,12],[65,11],[70,10],[75,10],[80,9],[85,8],[90,4]] };
+function cs30Cut(age, sex){ const t=CS30_NORM[sex==='男'?'M':'F']; let c=t[0][1]; for(const [a,v] of t){ if(age>=a) c=v; } return c; }
+const PHY_CUT = { tug:13.5, gripM:28, gripF:18, gait:1.0, oneLeg:5, cs5:12 }; // TUG≥13.5s 跌倒風險；AWGS 2019 肌少症切點
+
+/* ---------- 復能處方庫 ---------- */
+const EX_CATS = ['肌力','平衡','耐力','關節活動','ADL自立支援','IADL','認知','口腔吞嚥','心理社會'];
+const EXERCISES = [
+  {id:'str_sitstand', cat:'肌力', name:'坐站訓練', dose:'10下 × 2組', how:'坐在有扶手的穩固椅子前1/2，雙腳與肩同寬、腳跟在膝蓋後方；身體前傾「鼻子超過腳尖」再站直，慢慢坐下。能力好者雙手交叉胸前。', caution:'站起時有頭暈、血壓偏高（收縮壓>180）暫停；椅子靠牆防滑。', selfcare:false},
+  {id:'str_kneeext', cat:'肌力', name:'坐姿膝伸直抬腿', dose:'每側10下 × 2組', how:'坐姿背靠椅背，一腳膝蓋慢慢伸直，腳尖朝上停3秒再放下。可綁0.5–1公斤沙包增加阻力。', caution:'膝關節疼痛加劇時降低次數或不加沙包。', selfcare:false},
+  {id:'str_heelraise', cat:'肌力', name:'扶椅墊腳尖', dose:'10下 × 2組', how:'雙手扶穩椅背，腳跟慢慢抬高停2秒再放下。', caution:'需有人在旁監督，防止後倒。', selfcare:false},
+  {id:'str_hipabd', cat:'肌力', name:'扶椅側抬腿', dose:'每側10下 × 2組', how:'扶椅背站直，一腳向側邊抬起約20公分，身體不歪斜，慢慢放下。', caution:'髖關節置換術後依治療師指示角度。', selfcare:false},
+  {id:'str_step', cat:'肌力', name:'踏階訓練', dose:'每側10下 × 2組', how:'在扶手旁使用10公分踏階，健側先上、患側先下（上樓好腳先，下樓壞腳先）。', caution:'需近身監督，必要時使用步態帶。', selfcare:false},
+  {id:'str_band_row', cat:'肌力', name:'彈力帶划船（上肢）', dose:'10下 × 2組', how:'坐姿雙手握彈力帶，手肘往後拉、夾背停2秒，慢慢回原位。', caution:'肩痛時減小範圍。', selfcare:false},
+  {id:'str_grip', cat:'肌力', name:'握力訓練（握力球/擰毛巾）', dose:'10下 × 2組', how:'用力握緊軟球5秒後放鬆；或雙手擰濕毛巾。', caution:'手部關節發炎期間暫停。', selfcare:false},
+  {id:'bal_chair_oneleg', cat:'平衡', name:'扶椅單腳站', dose:'每側10秒 × 3次', how:'雙手扶椅背，一腳抬離地面維持平衡；進步後改單手扶、再改手指輕觸。', caution:'照服員站在個案側後方保護。', selfcare:false},
+  {id:'bal_tandem', cat:'平衡', name:'前後腳站（半串聯站）', dose:'10秒 × 3次', how:'一腳腳跟靠在另一腳腳尖旁站立，雙手扶桌或椅背。', caution:'近身保護，旁邊不放雜物。', selfcare:false},
+  {id:'bal_weightshift', cat:'平衡', name:'重心轉移', dose:'左右、前後各10次', how:'站姿扶椅，身體重心慢慢移到左腳再移到右腳；再前後移動。', caution:'有明顯晃動時改為坐姿重心轉移。', selfcare:false},
+  {id:'bal_obstacle', cat:'平衡', name:'跨越障礙步行', dose:'來回 × 3趟', how:'於走廊放置2–3個低矮障礙物（如毛巾捲），練習抬腳跨越。', caution:'使用原有輔具，照服員陪走。', selfcare:false},
+  {id:'end_march', cat:'耐力', name:'坐姿/扶椅原地踏步', dose:'3–5分鐘', how:'坐姿或扶椅原地踏步，配合音樂；自覺「有點喘、還能說話」為適當強度（RPE 11–13）。', caution:'心臟病個案監測心跳與血壓。', selfcare:false},
+  {id:'end_walk', cat:'耐力', name:'走廊步行訓練', dose:'＿＿公尺 × 2趟', how:'使用原有輔具，在走廊來回步行；記錄距離與休息次數。', caution:'下肢無力者使用步態帶並近身保護。', selfcare:false},
+  {id:'end_bike', cat:'耐力', name:'腳踏車/上下肢訓練器', dose:'10分鐘', how:'低阻力開始，速度穩定。', caution:'足部需固定好；中途不適即停止。', selfcare:false},
+  {id:'rom_upper', cat:'關節活動', name:'上肢關節活動（爬牆/繞肩）', dose:'各10下', how:'手指沿牆面慢慢往上爬到最高點停3秒；肩膀前後繞圈。', caution:'偏癱側肩膀勿用力拉扯手臂。', selfcare:false},
+  {id:'rom_neck', cat:'關節活動', name:'頸部與軀幹伸展操', dose:'各5下', how:'坐姿進行點頭、轉頭、側彎、軀幹旋轉，動作緩慢配合呼吸。', caution:'頸椎疾患避免過度後仰。', selfcare:false},
+  {id:'adl_transfer', cat:'ADL自立支援', name:'移位練習（輪椅↔椅子/馬桶）', dose:'每次移位時執行', how:'以「最少必要協助」原則：先口頭提示煞車、移腳踏板、身體前傾，讓個案自己出力；照服員只在需要時給予協助。', caution:'未能負重者使用移位腰帶。', selfcare:true},
+  {id:'adl_toilet', cat:'ADL自立支援', name:'如廁步驟練習', dose:'每次如廁時執行', how:'分解步驟：走進廁所→轉身→扶扶手→自己拉下褲子→坐下→清潔→穿回褲子。只協助個案做不到的那一步。', caution:'注意地面濕滑，個案隱私。', selfcare:true},
+  {id:'adl_toiletschedule', cat:'ADL自立支援', name:'定時如廁/排泄訓練', dose:'每2小時提醒1次', how:'依排尿紀錄定時引導如廁，記錄是否成功、是否失禁。', caution:'記錄異常（血尿、灼熱）回報護理師。', selfcare:true},
+  {id:'adl_feed', cat:'ADL自立支援', name:'自行進食訓練', dose:'每餐', how:'提供合適輔具（加粗湯匙、防滑墊、有邊碗），鼓勵自己吃完，必要時只協助最後幾口。', caution:'吞嚥困難者依飲食質地與姿勢建議（坐正、下巴微收）。', selfcare:true},
+  {id:'adl_dress', cat:'ADL自立支援', name:'穿脫衣練習', dose:'每日1次（如換外套、午休前後）', how:'偏癱者「患側先穿、健側先脫」；給予口頭步驟提示，讓個案自己完成。', caution:'選擇寬鬆、前開衣物。', selfcare:true},
+  {id:'adl_groom', cat:'ADL自立支援', name:'自行盥洗（洗手/刷牙/梳頭）', dose:'每日餐後', how:'將用品擺在個案伸手可及處，提示步驟，讓個案自行完成。', caution:'', selfcare:true},
+  {id:'adl_walkmeal', cat:'ADL自立支援', name:'自行步行至用餐/活動區', dose:'每日移動時', how:'能步行者以步行取代輪椅推送，照服員陪走。', caution:'疲累時可中途休息。', selfcare:true},
+  {id:'iadl_fold', cat:'IADL', name:'摺衣服/整理物品', dose:'15分鐘', how:'摺毛巾、衣物分類、整理桌面；可擔任中心小幫手。', caution:'', selfcare:true},
+  {id:'iadl_cook', cat:'IADL', name:'備餐活動（洗菜、剝豆、切水果）', dose:'每週1–2次', how:'在團體備餐活動中負責個案能力所及的步驟。', caution:'使用刀具需監督。', selfcare:true},
+  {id:'iadl_shop', cat:'IADL', name:'模擬購物/金錢計算', dose:'20分鐘', how:'使用模擬商品與錢幣練習挑選、計算與找零。', caution:'', selfcare:true},
+  {id:'iadl_meds', cat:'IADL', name:'服藥管理練習（藥盒分裝）', dose:'每週1次', how:'在護理師指導下練習看藥袋、分裝一週藥盒、依時間服藥。', caution:'由護理師確認正確性。', selfcare:true},
+  {id:'iadl_phone', cat:'IADL', name:'電話/手機使用練習', dose:'每週1–2次', how:'練習撥打家屬電話、使用視訊。', caution:'', selfcare:true},
+  {id:'cog_ro', cat:'認知', name:'現實導向', dose:'每日上午', how:'說出今天日期、星期、天氣、節日；看月曆與白板。', caution:'不糾正責備，以提示引導。', selfcare:false},
+  {id:'cog_game', cat:'認知', name:'益智活動（分類/配對/計算）', dose:'20分鐘', how:'依個案程度選擇撲克牌配對、物品分類、數字計算等。', caution:'難度以「努力一下可以完成」為原則。', selfcare:false},
+  {id:'cog_reminisce', cat:'認知', name:'懷舊/回憶活動', dose:'每週1–2次', how:'以老照片、老歌、舊物引導分享過往經驗。', caution:'留意引發負面情緒的話題。', selfcare:false},
+  {id:'oral_exercise', cat:'口腔吞嚥', name:'健口操（餐前）', dose:'每餐前5分鐘', how:'臉頰鼓氣、舌頭前伸左右、發「ㄆㄚ、ㄊㄚ、ㄎㄚ」音、唾液腺按摩。', caution:'', selfcare:false},
+  {id:'oral_swallow', cat:'口腔吞嚥', name:'吞嚥訓練（依語言治療師指示）', dose:'依處方', how:'依語言治療師指定的姿勢、食物質地與吞嚥策略執行。', caution:'出現嗆咳、聲音濕潤立即停止並回報。', selfcare:false},
+  {id:'psy_role', cat:'心理社會', name:'角色任務（擔任小幫手）', dose:'每日', how:'安排個案有意義的任務，如發點心、澆花、帶操，提升自我價值感。', caution:'', selfcare:true},
+  {id:'psy_group', cat:'心理社會', name:'鼓勵參與團體活動', dose:'每日', how:'主動邀請參加團體課程，安排座位在熟識的長輩旁。', caution:'尊重個案意願，不勉強。', selfcare:false},
+];
+
+/* ---------- 評估結果 → 問題與建議處方 ---------- */
+function suggestFromAssessment(a, client){
+  const out=[]; if(!a) return out;
+  const add=(code,text,ex,ref)=>{ if(!out.find(o=>o.code===code)) out.push({code,text,ex:ex||[],referral:ref||''}); };
+  const b=a.adl||{}, has=k=>b[k]!==''&&b[k]!=null;
+  if(has('transfer')&&+b.transfer<15) add('transfer','移位能力受限（巴氏移位 '+b.transfer+' 分）',['adl_transfer','str_sitstand']);
+  if(has('mobility')&&+b.mobility<15) add('mobility','平地行走能力受限（巴氏走動 '+b.mobility+' 分）',['end_walk','bal_weightshift','adl_walkmeal']);
+  if(has('stairs')&&+b.stairs<10) add('stairs','上下樓梯能力受限',['str_step','str_heelraise']);
+  if(has('toilet')&&+b.toilet<10) add('toilet','如廁需協助',['adl_toilet']);
+  if(has('dressing')&&+b.dressing<10) add('dressing','穿脫衣需協助',['adl_dress']);
+  if(has('feeding')&&+b.feeding<10) add('feeding','進食需協助',['adl_feed','oral_exercise']);
+  if(has('grooming')&&+b.grooming<5) add('grooming','個人衛生需協助',['adl_groom']);
+  if((has('bladder')&&+b.bladder<10)||(has('bowel')&&+b.bowel<10)) add('contin','排泄控制問題',['adl_toiletschedule'],'護理師評估排泄問題');
+  const p=a.phy||{}; const ag=client?ageAt(client.birth,a.date):null;
+  if((p.tug!==''&&p.tug!=null&&+p.tug>=PHY_CUT.tug)||(p.oneLeg!==''&&p.oneLeg!=null&&+p.oneLeg<PHY_CUT.oneLeg)) add('fall','跌倒高風險（TUG/單腳站未達標）',['bal_chair_oneleg','bal_tandem','bal_weightshift','str_sitstand']);
+  if((p.cs30!==''&&p.cs30!=null&&ag&&+p.cs30<cs30Cut(ag,client.gender))||(p.cs5!==''&&p.cs5!=null&&+p.cs5>=PHY_CUT.cs5)) add('legstr','下肢肌力不足（坐站測試低於同齡常模）',['str_sitstand','str_kneeext','str_heelraise','str_hipabd']);
+  if(p.grip!==''&&p.grip!=null&&client&&+p.grip<(client.gender==='男'?PHY_CUT.gripM:PHY_CUT.gripF)) add('grip','握力不足（AWGS 肌少症切點以下）',['str_grip','str_band_row'],'營養師評估蛋白質攝取');
+  if(p.gait4!==''&&p.gait4!=null&&+p.gait4>0&&4/(+p.gait4)<PHY_CUT.gait) add('gait','步行速度慢（<1.0 m/s）',['end_walk','end_march']);
+  const i=a.iadl||{}, iz=k=>i[k]!==''&&i[k]!=null&&IADL.find(x=>x.k===k).opts[+i[k]]?.[1]===0;
+  if(iz('meds')) add('meds','服藥管理需協助',['iadl_meds']);
+  if(iz('shopping')||iz('finance')) add('shop','購物與金錢管理能力下降',['iadl_shop']);
+  if(iz('cooking')) add('cook','備餐能力下降',['iadl_cook']);
+  if(iz('housework')||iz('laundry')) add('house','家務能力下降',['iadl_fold']);
+  if(iz('phone')) add('phone','電話使用困難',['iadl_phone']);
+  const sp=scoreSPMSQ(a); if(sp&&sp.adj>=3) add('cog','認知功能退化（SPMSQ：'+spmsqLevel(sp.adj)+'）',['cog_ro','cog_game','cog_reminisce'], sp.adj>=5&&!client?.dementia?'建議轉介神經內科/精神科進行失智症診斷':'');
+  const g=scoreGDS(a); if(g&&g.total>=5) add('mood','疑似憂鬱情緒（GDS-15＝'+g.total+'）',['psy_role','psy_group'],'社工關懷；必要時轉介身心科');
+  const m=scoreMNA(a); if(m&&m.total<=11) add('nutri',mnaLevel(m.total)+'（MNA-SF＝'+m.total+'）',[],'轉介營養師評估');
+  if(a.pain&&+a.pain.nrs>=4) add('pain','疼痛影響活動（NRS '+a.pain.nrs+'）',['rom_upper','rom_neck'],'醫師/物理治療師評估疼痛');
+  (a.copm||[]).filter(c=>c.activity).forEach((c,ix)=>add('copm'+ix,'個案期待：'+c.activity,[]));
+  return out;
+}
+
+/* ---------- 計分 ---------- */
+function scoreBarthel(a){ const b=a?.adl; if(!b) return null; let t=0,n=0; for(const it of BARTHEL){ const v=b[it.k]; if(v===''||v==null) continue; t+=+v; n++; } return n===BARTHEL.length?{total:t,level:barthelLevel(t)}:(n?{total:t,partial:true,level:'未完成('+n+'/10)'}:null); }
+function scoreIADL(a){ const b=a?.iadl; if(!b) return null; let t=0,n=0; for(const it of IADL){ const v=b[it.k]; if(v===''||v==null) continue; const o=it.opts[+v]; if(!o) continue; t+=o[1]; n++; } return n?{total:t,partial:n<IADL.length}:null; }
+function scoreSPMSQ(a){ const s=a?.spmsq; if(!s||!s.items) return null; const ans=s.items.filter(x=>x==='c'||x==='x'); if(ans.length<SPMSQ.length) return ans.length?{errors:s.items.filter(x=>x==='x').length,partial:true,adj:null}:null; const e=s.items.filter(x=>x==='x').length; let adj=e; if(s.edu==='low') adj=Math.max(0,e-1); if(s.edu==='high') adj=e+1; return {errors:e,adj}; }
+function scoreGDS(a){ const g=a?.gds; if(!g) return null; let t=0,n=0; GDS15.forEach((q,ix)=>{ const v=g[ix]; if(v!=='y'&&v!=='n') return; n++; if(v===q[1]) t++; }); return n===15?{total:t}:(n?{total:t,partial:true}:null); }
+function scoreMNA(a){ const m=a?.mna; if(!m) return null; let t=0; for(const it of MNASF){ if(m[it.k]===''||m[it.k]==null) return null; t+=+m[it.k]; } let f=null; const bmi=calcBMI(a); if(bmi!=null) f=bmi<19?0:bmi<21?1:bmi<23?2:3; else if(m.calf!==''&&m.calf!=null) f=+m.calf<31?0:3; if(f==null) return null; return {total:t+f}; }
+function calcBMI(a){ const p=a?.phy||{}; if(!+p.height||!+p.weight) return null; const h=+p.height/100; return Math.round(+p.weight/(h*h)*10)/10; }
+function gaitSpeed(a){ const s=+a?.phy?.gait4; return s>0?Math.round(4/s*100)/100:null; }
+function ageAt(birth, iso){ if(!birth) return null; const b=new Date(birth+'T00:00:00'), d=iso?new Date(iso+'T00:00:00'):new Date(); let y=d.getFullYear()-b.getFullYear(); if(d.getMonth()<b.getMonth()||(d.getMonth()===b.getMonth()&&d.getDate()<b.getDate())) y--; return y; }
+
+/* 目標達成量表 GAS */
+const GAS = [[-2,'-2 退步／遠低於預期'],[-1,'-1 未達預期（維持基準）'],[0,'0 達成預期目標'],[1,'+1 略優於預期'],[2,'+2 遠優於預期']];
+
+/* ---------- 評鑑指標參照（115年度臺中市社區式日間照顧評鑑基準） ---------- */
+const INDICATORS = {
+  B1:{name:'服務計畫及跨專業服務', items:[
+    '所有服務對象皆訂有個別化服務計畫',
+    '新服務對象需求評估包括生理、心理認知、家庭及社會支持、重大生命事件',
+    '依評估結果確立問題及服務計畫，具體執行並留有評估及服務紀錄',
+    '至少每6個月評估一次並修正服務計畫',
+    '依需求適時轉介醫療或其他專業服務',
+    '每3個月至少1次跨專業個案討論會（≥3種專業），追蹤前次決議']},
+  B3:{name:'感染預防、處理及監測', items:['服務對象體溫每日至少測量1次並有紀錄']},
+  B5:{name:'意外、緊急事件處理與預防', items:['發生時依流程處理並有紀錄','事件有分析報告、改善措施及追蹤紀錄']},
+  B6:{name:'提供緊急送醫服務', items:['緊急就醫紀錄完整','與家屬即時聯繫之紀錄']},
+  B7:{name:'服務對象團體或社區活動', items:['每月至少辦理1次團體或社區活動並有紀錄']},
+  B8:{name:'照顧者（關係人）支持性服務', items:['與照顧者主動聯繫之具體做法與紀錄','每年至少1次照顧者支持性活動']},
+  B9:{name:'服務對象生活輔助', items:['依個別需求提供或連結適切輔具']},
+  B10:{name:'維持自我照顧能力', items:['依需求提供自立支援','落實增加自我照顧能力之措施，確實執行並有紀錄']},
+  B11:{name:'強化長照人員專業知能', items:['每人每年繼續教育≥20小時（含感管≥1小時）','均參與提升服務對象自我照顧能力相關課程']},
+};
+
+/* ---- store.js ---- */
+/* ================================================================
+   資料層：IndexedDB（失敗時退回 localStorage），所有資料只存在本機
+   每筆紀錄含 id / updatedAt / updatedBy，刪除採軟刪除，方便多台裝置合併
+   ================================================================ */
+const COLLECTIONS = ['staff','clients','assessments','plans','execs','vitals','meetings','incidents','activities','contacts','library'];
+
+const Store = (() => {
+  const DB = { meta:{} };
+  let idb = null, timer = null;
+  const dirty = new Set();
+
+  function openIDB(){
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('rehab-daycare', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => res(null);
+      } catch(e){ res(null); }
+    });
+  }
+  function idbGet(k){ return new Promise(res => { try { const q = idb.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); } catch(e){ res(undefined); } }); }
+
+  async function load(){
+    idb = await openIDB();
+    for (const c of ['meta', ...COLLECTIONS]) {
+      let v;
+      if (idb) v = await idbGet(c);
+      else { try { v = JSON.parse(localStorage.getItem('rehab:'+c)); } catch(e){} }
+      DB[c] = v ?? (c === 'meta' ? {} : []);
+    }
+    try { navigator.storage?.persist?.(); } catch(e){}
+  }
+
+  function touch(c){ dirty.add(c); clearTimeout(timer); timer = setTimeout(flush, 120); }
+  function flush(){
+    const cols = [...dirty]; dirty.clear();
+    if (idb) {
+      try {
+        const tx = idb.transaction('kv','readwrite'), st = tx.objectStore('kv');
+        cols.forEach(c => st.put(DB[c], c));
+        tx.onerror = () => App.toast('資料儲存失敗，請立即匯出備份', 'err');
+      } catch(e){ App.toast('資料儲存失敗：'+e.message, 'err'); }
+    } else {
+      try { cols.forEach(c => localStorage.setItem('rehab:'+c, JSON.stringify(DB[c]))); }
+      catch(e){ App.toast('瀏覽器儲存空間不足，請匯出備份', 'err'); }
+    }
+  }
+  window.addEventListener('beforeunload', () => { if (dirty.size) flush(); });
+
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const all = c => DB[c].filter(r => !r.deleted);
+  const get = (c, id) => DB[c].find(r => r.id === id && !r.deleted);
+  function upsert(c, obj){
+    const now = new Date().toISOString();
+    obj.updatedAt = now; obj.updatedBy = App.currentUserId();
+    if (!obj.id) { obj.id = newId(); obj.createdAt = now; DB[c].push(obj); }
+    else { const i = DB[c].findIndex(r => r.id === obj.id); if (i >= 0) DB[c][i] = obj; else DB[c].push(obj); }
+    touch(c); return obj;
+  }
+  function remove(c, id){ const r = DB[c].find(x => x.id === id); if (r) { r.deleted = true; r.updatedAt = new Date().toISOString(); touch(c); } }
+  function setMeta(k, v){ DB.meta[k] = v; touch('meta'); }
+
+  function exportAll(){ return { app:'rehab-daycare', schema:1, exportedAt:new Date().toISOString(), meta:DB.meta, ...Object.fromEntries(COLLECTIONS.map(c => [c, DB[c]])) }; }
+  // 合併匯入：同 id 取 updatedAt 較新者
+  function mergeImport(data, replace){
+    if (!data || data.app !== 'rehab-daycare') throw new Error('檔案格式不符（不是本系統的備份檔）');
+    let added = 0, updated = 0;
+    for (const c of COLLECTIONS) {
+      const inc = Array.isArray(data[c]) ? data[c] : [];
+      if (replace) { DB[c] = inc; added += inc.length; touch(c); continue; }
+      for (const r of inc) {
+        const i = DB[c].findIndex(x => x.id === r.id);
+        if (i < 0) { DB[c].push(r); added++; }
+        else if ((r.updatedAt||'') > (DB[c][i].updatedAt||'')) { DB[c][i] = r; updated++; }
+      }
+      touch(c);
+    }
+    if (replace || !DB.meta.center) { DB.meta = { ...DB.meta, ...(data.meta||{}) }; touch('meta'); }
+    return { added, updated };
+  }
+  function clearAll(){ COLLECTIONS.forEach(c => { DB[c] = []; touch(c); }); DB.meta = {}; touch('meta'); }
+
+  return { DB, load, all, get, upsert, remove, setMeta, exportAll, mergeImport, clearAll, newId, flush };
+})();
+
+/* ---- core.js ---- */
+/* ================================================================
+   核心：工具函式、狀態、路由、表單綁定、對話框、列印、匯出
+   ================================================================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtISO = d => { const z = new Date(d); z.setMinutes(z.getMinutes() - z.getTimezoneOffset()); return z.toISOString().slice(0, 10); };
+const todayISO = () => fmtISO(new Date());
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return fmtISO(d); };
+const addMonths = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setMonth(d.getMonth() + n); return fmtISO(d); };
+const diffDays = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
+const weekday = iso => { const w = new Date(iso + 'T00:00:00').getDay(); return w === 0 ? 7 : w; };
+const rocDate = iso => { if (!iso) return ''; const [y, m, d] = iso.slice(0, 10).split('-'); return `${+y - 1911}/${m}/${d}`; };
+const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+const getPath = (o, p) => p.split('.').reduce((x, k) => x == null ? undefined : x[k], o);
+function setPath(o, p, v){ const ks = p.split('.'); let x = o; for (let i = 0; i < ks.length - 1; i++) { if (x[ks[i]] == null) x[ks[i]] = /^\d+$/.test(ks[i + 1]) ? [] : {}; x = x[ks[i]]; } x[ks.at(-1)] = v; }
+const clone = o => JSON.parse(JSON.stringify(o));
+const byDate = k => (a, b) => (a[k] || '').localeCompare(b[k] || '');
+
+const S = { edit:null, dirty:false, onEdit:null, todayDate:todayISO(), showAllToday:false, openExec:null, lastHash:'' };
+
+/* ---------- 圖示 ---------- */
+const ICON_PATHS = {
+  home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
+  check:'M4 12l5 5L20 6',
+  users:'M16 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8M22 20v-2a4 4 0 00-3-3.9M16 2.1a4 4 0 010 7.8',
+  meet:'M3 5h18v11H8l-5 4z',
+  alert:'M12 3l10 18H2zM12 10v5M12 18v.5',
+  star:'M12 3l2.8 6 6.2.6-4.7 4.2 1.4 6.2L12 17l-5.7 3 1.4-6.2L3 9.6 9.2 9z',
+  chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  gear:'M12 15a3 3 0 100-6 3 3 0 000 6M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z',
+  plus:'M12 5v14M5 12h14', print:'M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z',
+  edit:'M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z', trash:'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6',
+  back:'M15 18l-6-6 6-6', menu:'M3 6h18M3 12h18M3 18h18', x:'M18 6L6 18M6 6l12 12',
+  rx:'M5 3h7a4 4 0 010 8H5zM5 11v10M10 11l9 10M19 13l-6 8', clip:'M9 2h6v4H9zM5 4h4M15 4h4v18H5V4',
+  download:'M12 3v12M7 10l5 5 5-5M4 21h16', upload:'M12 21V9M7 14l5-5 5 5M4 3h16', heart:'M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 000-7.8z',
+};
+const icon = (n, s = 18) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON_PATHS[n] || ''}"/></svg>`;
+
+/* ---------- 表單元件（以 data-bind 綁定 S.edit） ---------- */
+const bAttr = (p, t) => `data-bind="${p}"${t ? ` data-t="${t}"` : ''}`;
+const V = p => getPath(S.edit, p);
+const F = {
+  input:(p, o = {}) => `<input class="inp ${o.cls||''}" ${bAttr(p, o.t)} type="${o.type||'text'}" value="${esc(V(p) ?? '')}" ${o.ph?`placeholder="${esc(o.ph)}"`:''} ${o.step?`step="${o.step}"`:''} ${o.min!=null?`min="${o.min}"`:''} ${o.max!=null?`max="${o.max}"`:''} ${o.list?`list="${o.list}"`:''} ${o.attrs||''}>`,
+  num:(p, o = {}) => F.input(p, { ...o, type:'number', t:'num', step:o.step||'any', cls:'inp-num ' + (o.cls||'') }),
+  date:(p, o = {}) => F.input(p, { ...o, type:'date' }),
+  text:(p, o = {}) => `<textarea class="inp" ${bAttr(p)} rows="${o.rows||3}" ${o.ph?`placeholder="${esc(o.ph)}"`:''}>${esc(V(p) ?? '')}</textarea>`,
+  select:(p, opts, o = {}) => `<select class="inp" ${bAttr(p, o.t)}>${o.blank!==false?'<option value="">— 請選擇 —</option>':''}${opts.map(x => { const [v, l] = Array.isArray(x) ? x : [x, x]; return `<option value="${esc(v)}" ${String(V(p) ?? '') === String(v) ? 'selected' : ''}>${esc(l)}</option>`; }).join('')}</select>`,
+  radios:(p, opts, o = {}) => `<div class="pills ${o.cls||''}">${opts.map(x => { const [v, l] = Array.isArray(x) ? x : [x, x]; return `<label class="pill"><input type="radio" name="${p}" value="${esc(v)}" ${bAttr(p, o.t)} ${String(V(p) ?? '') === String(v) ? 'checked' : ''}><span>${esc(l)}</span></label>`; }).join('')}</div>`,
+  check:(p, label) => `<label class="chk"><input type="checkbox" ${bAttr(p)} ${V(p) ? 'checked' : ''}><span>${label}</span></label>`,
+  checkArr:(p, val, label, num) => `<label class="chk"><input type="checkbox" ${bAttr(p)} data-arr="${esc(val)}" ${num?'data-num="1"':''} ${(V(p) || []).includes(val) ? 'checked' : ''}><span>${esc(label)}</span></label>`,
+  field:(label, html, o = {}) => `<div class="field ${o.cls||''}"><label class="lbl">${label}${o.req?' <b class="req">*</b>':''}</label>${html}${o.hint?`<div class="hint">${o.hint}</div>`:''}</div>`,
+};
+function onBind(e){
+  const el = e.target, p = el.dataset?.bind; if (!p || !S.edit) return;
+  let v;
+  if (el.type === 'checkbox') {
+    if (el.dataset.arr != null) { const x = el.dataset.num ? +el.dataset.arr : el.dataset.arr; const arr = getPath(S.edit, p) || []; v = el.checked ? [...new Set([...arr, x])] : arr.filter(y => y !== x); if (el.dataset.num) v.sort((a, b) => a - b); }
+    else v = el.checked;
+  } else if (el.type === 'radio') { if (!el.checked) return; v = el.dataset.t === 'num' ? +el.value : el.value; }
+  else { v = el.value; if (el.dataset.t === 'num') v = v === '' ? '' : +v; }
+  setPath(S.edit, p, v); S.dirty = true; if (S.onEdit) S.onEdit(p, el);
+}
+document.addEventListener('input', onBind); document.addEventListener('change', onBind);
+
+/* ---------- 共用 UI ---------- */
+function staffName(id){ const s = Store.get('staff', id); return s ? s.name : ''; }
+function staffRole(id){ return Store.get('staff', id)?.role || ''; }
+function clientName(id){ return Store.get('clients', id)?.name || '（已刪除）'; }
+const staffOpts = (filter) => Store.all('staff').filter(s => s.active !== false && (!filter || filter(s))).map(s => [s.id, `${s.name}（${s.role}）`]);
+const clientOpts = (all) => Store.all('clients').filter(c => all || c.status !== '結案').sort(byDate('name')).map(c => [c.id, c.name]);
+const badge = (t, k = '') => `<span class="badge ${k}">${esc(t)}</span>`;
+const empty = (t, btn = '') => `<div class="empty"><p>${t}</p>${btn}</div>`;
+function btn(label, onclick, o = {}){ return `<button type="button" class="btn ${o.k||''}" onclick="${esc(onclick)}" ${o.title?`title="${esc(o.title)}"`:''}>${o.i?icon(o.i, 16):''}<span>${label}</span></button>`; }
+
+function toast(msg, kind = ''){ const t = document.createElement('div'); t.className = 'toast ' + kind; t.textContent = msg; $('#toasts').appendChild(t); setTimeout(() => t.classList.add('show'), 10); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, kind === 'err' ? 6000 : 2600); }
+
+/* 對話框：openModal(title, html, {onSave, saveLabel, wide}) */
+let modalCfg = null;
+function openModal(title, html, cfg = {}){
+  modalCfg = cfg;
+  $('#modal').innerHTML = `<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal ${cfg.wide?'wide':''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="modal-h"><h3>${esc(title)}</h3><button class="icon-btn" onclick="closeModal()" aria-label="關閉">${icon('x')}</button></div>
+    <div class="modal-b" id="modal-body">${html}</div>
+    <div class="modal-f">${cfg.extra||''}<span class="sp"></span>${btn('取消','closeModal()')}${cfg.onSave?btn(cfg.saveLabel||'儲存','modalSave()',{k:'primary'}):''}</div></div></div>`;
+  setTimeout(() => $('#modal .modal-b input, #modal .modal-b select, #modal .modal-b textarea')?.focus(), 30);
+}
+function modalSave(){ if (modalCfg?.onSave && modalCfg.onSave() !== false) closeModal(true); }
+function closeModal(saved){ $('#modal').innerHTML = ''; if (!saved && modalCfg?.restore) modalCfg.restore(); modalCfg = null; }
+function askConfirm(msg){ return window.confirm(msg); }
+
+/* ---------- 列印 ---------- */
+function printHTML(title, html){
+  const center = Store.DB.meta.center || '日間照顧中心';
+  $('#print').innerHTML = `<div class="p-head"><div class="p-center">${esc(center)}</div><div class="p-title">${esc(title)}</div><div class="p-date">列印日期：${rocDate(todayISO())}　列印人：${esc(staffName(App.currentUserId()) || '—')}</div></div>${html}`;
+  document.title = title + '｜' + center;
+  setTimeout(() => { window.print(); document.title = APP_TITLE; }, 50);
+}
+
+/* ---------- 下載與 CSV ---------- */
+function download(name, data, type){ const b = data instanceof Blob ? data : new Blob([data], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function exportCSV(name, headers, rows){
+  const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const body = [headers, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+  download(name, '﻿' + body, 'text/csv;charset=utf-8');
+}
+
+/* ---------- 加密備份（AES-GCM + PBKDF2） ---------- */
+async function deriveKey(pw, salt){ const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:200000, hash:'SHA-256' }, base, { name:'AES-GCM', length:256 }, false, ['encrypt', 'decrypt']); }
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function encryptJSON(obj, pw){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pw, salt);
+  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  let bin = ''; const u = new Uint8Array(ct); for (let i = 0; i < u.length; i += 32768) bin += String.fromCharCode(...u.subarray(i, i + 32768));
+  return JSON.stringify({ app:'rehab-daycare', enc:'AES-GCM', salt:b64(salt), iv:b64(iv), data:btoa(bin) });
+}
+async function decryptJSON(wrap, pw){ const key = await deriveKey(pw, unb64(wrap.salt)); const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv:unb64(wrap.iv) }, key, unb64(wrap.data)); return JSON.parse(new TextDecoder().decode(pt)); }
+
+/* ---------- 簡易折線圖（SVG） ---------- */
+function lineChart(points, o = {}){
+  const pts = points.filter(p => p.y !== null && p.y !== undefined && p.y !== '' && !isNaN(p.y));
+  if (pts.length === 0) return `<div class="chart-empty">尚無資料</div>`;
+  const W = 320, H = 150, L = 34, R = 22, T = 16, B = 26;
+  const ys = pts.map(p => +p.y).concat(o.cut != null ? [o.cut] : []);
+  let min = o.min ?? Math.min(...ys), max = o.max ?? Math.max(...ys); if (min === max) { min -= 1; max += 1; }
+  const x = i => pts.length === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (pts.length - 1);
+  const y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(+p.y).toFixed(1)}`).join('');
+  const grid = [min, (min + max) / 2, max].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="cg"/><text x="${L - 5}" y="${y(v) + 4}" class="ct" text-anchor="end">${Math.round(v * 10) / 10}</text>`).join('');
+  const cut = o.cut != null ? `<line x1="${L}" x2="${W - R}" y1="${y(o.cut)}" y2="${y(o.cut)}" class="ccut"/><text x="${W - R}" y="${y(o.cut) - 4}" class="ct cut-t" text-anchor="end">${esc(o.cutLabel || '切點 ' + o.cut)}</text>` : '';
+  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(+p.y)}" r="4" class="cd"><title>${rocDate(p.x)}：${p.y}${o.unit || ''}</title></circle><text x="${x(i)}" y="${y(+p.y) - 8}" class="ct cv" text-anchor="middle">${p.y}</text><text x="${x(i)}" y="${H - 8}" class="ct" text-anchor="middle">${rocDate(p.x).slice(-5)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${esc(o.title || '')}">${grid}${cut}<path d="${path}" class="cl"/>${dots}</svg>`;
+}
+
+/* ---- logic.js ---- */
+/* ================================================================
+   業務邏輯：處方有效期、排程、執行率、再評提醒、評鑑檢核、成效指標
+   ================================================================ */
+const REASSESS_MONTHS = 6;      // B1-4 至少每6個月評估一次
+const MEETING_MONTHS = 3;       // B1-6 每3個月至少1次跨專業個案討論會
+const DEFAULT_CYCLE_DAYS = 84;  // 復能週期預設12週
+
+const Logic = {
+  assessmentsOf: cid => Store.all('assessments').filter(a => a.clientId === cid).sort(byDate('date')),
+  lastAssessment(cid){ return this.assessmentsOf(cid).at(-1) || null; },
+  plansOf: cid => Store.all('plans').filter(p => p.clientId === cid).sort((a, b) => (a.version || 0) - (b.version || 0)),
+  activePlan(cid){ return this.plansOf(cid).filter(p => p.status === '執行中').at(-1) || null; },
+  planOn(cid, iso){ return this.plansOf(cid).filter(p => p.startDate <= iso && (!p.endDate || p.endDate >= iso) && p.status !== '草稿').at(-1) || null; },
+  itemsOn(plan, iso){ if (!plan) return []; const w = weekday(iso); return (plan.items || []).filter(it => (it.days || []).includes(w)); },
+
+  index(){
+    const ex = new Map(), vi = new Map(), exDay = new Set();
+    for (const e of Store.all('execs')) { ex.set(e.clientId + '|' + e.itemId + '|' + e.date, e); exDay.add(e.clientId + '|' + e.date); }
+    for (const v of Store.all('vitals')) vi.set(v.clientId + '|' + v.date, v);
+    return { ex, vi, exDay };
+  },
+  /* 個案某日是否「應執行」：有出席紀錄=出席；無紀錄則看固定到班日 */
+  expected(client, iso, idx){
+    const v = idx.vi.get(client.id + '|' + iso);
+    if (v && v.present === false) return false;
+    if (v && v.present === true) return true;
+    if (idx.exDay.has(client.id + '|' + iso)) return true;
+    return (client.attendDays || []).includes(weekday(iso));
+  },
+  /* 執行統計：from~to（含），回傳整體與分項 */
+  execStats(client, from, to, idx){
+    idx = idx || this.index();
+    const res = { expected:0, done:0, partial:0, skipped:0, missing:0, selfcare:0, byItem:{}, byCat:{} };
+    const end = to > todayISO() ? todayISO() : to;
+    if (client.admitDate && from < client.admitDate) from = client.admitDate;
+    for (let d = from; d <= end; d = addDays(d, 1)) {
+      const plan = this.planOn(client.id, d); if (!plan) continue;
+      if (!this.expected(client, d, idx)) continue;
+      for (const it of this.itemsOn(plan, d)) {
+        res.expected++;
+        const bi = res.byItem[it.id] ||= { name:it.name, cat:it.cat, expected:0, done:0, partial:0, skipped:0, missing:0 };
+        const bc = res.byCat[it.cat || '其他'] ||= { expected:0, done:0, partial:0 };
+        bi.expected++; bc.expected++;
+        const e = idx.ex.get(client.id + '|' + it.id + '|' + d);
+        if (!e) { res.missing++; bi.missing++; }
+        else if (e.status === '完成') { res.done++; bi.done++; bc.done++; if (it.selfcare) res.selfcare++; }
+        else if (e.status === '部分') { res.partial++; bi.partial++; bc.partial++; if (it.selfcare) res.selfcare++; }
+        else { res.skipped++; bi.skipped++; }
+      }
+    }
+    res.rate = res.expected ? Math.round((res.done + res.partial * 0.5) / res.expected * 100) : null;
+    return res;
+  },
+
+  /* 再評估到期：取「上次評估+6個月」與「處方預定再評日」較早者 */
+  reassessDue(cid){
+    const last = this.lastAssessment(cid), plan = this.activePlan(cid);
+    if (!last) return null;
+    const six = addMonths(last.date, REASSESS_MONTHS);
+    if (plan?.reviewDate && plan.reviewDate < six) return { date:plan.reviewDate, why:'處方預定再評日' };
+    return { date:six, why:'距上次評估滿6個月' };
+  },
+
+  /* 單一個案的評鑑檢核 */
+  clientChecks(c){
+    const as = this.assessmentsOf(c.id), last = as.at(-1), plan = this.activePlan(c.id), today = todayISO();
+    const first = as.find(a => a.type === '初評') || as[0];
+    const due = this.reassessDue(c.id);
+    const domains = a => !!(a && scoreBarthel(a) && !scoreBarthel(a).partial && (a.psycho || scoreSPMSQ(a) || scoreGDS(a)) && a.social && a.lifeEvents);
+    const flagged = last ? suggestFromAssessment(last, c).filter(s => s.referral) : [];
+    const refs = (plan?.referrals || []).filter(r => r.to);
+    const idx = this.index();
+    const st = plan ? this.execStats(c, addDays(today, -29), today, idx) : null;
+    return {
+      hasPlan: !!plan,
+      domains: domains(first) || domains(last),
+      planFromAssess: !!(plan && plan.assessmentId && (plan.goals || []).length && (plan.items || []).length),
+      execRecorded: !!(st && st.expected && st.missing / st.expected < 0.2),
+      reassessOK: !!(due && due.date >= today),
+      reassessDue: due,
+      referralOK: flagged.length === 0 || refs.length > 0,
+      flagged, st, plan, last,
+      lastContact: Store.all('contacts').filter(x => x.clientId === c.id).sort(byDate('date')).at(-1)?.date || null,
+    };
+  },
+
+  meetings(){ return Store.all('meetings').sort(byDate('date')); },
+  lastMeeting(){ return this.meetings().at(-1) || null; },
+  openDecisions(){ const out = []; for (const m of this.meetings()) for (const d of (m.decisions || [])) if (d.status !== '已完成') out.push({ ...d, meetingId:m.id, meetingDate:m.date }); return out; },
+  meetingDisciplines(m){ const set = new Set(); (m.attendees || []).forEach(id => { const r = staffRole(id); if (r) set.add(r); }); (m.external || []).forEach(x => x.discipline && set.add(x.discipline)); return [...set]; },
+
+  /* 照服員回報警示（7天內不適停止、或標記需治療師注意且未處理） */
+  alerts(){
+    const since = addDays(todayISO(), -7);
+    return Store.all('execs').filter(e => e.date >= since && (e.tolerance === '不適停止' || e.flag) && !e.ack).sort(byDate('date')).reverse();
+  },
+  /* 連續3次以上未執行之處方項目 */
+  repeatedSkips(){
+    const out = [];
+    for (const c of Store.all('clients').filter(c => c.status === '服務中')) {
+      const plan = this.activePlan(c.id); if (!plan) continue;
+      for (const it of plan.items || []) {
+        const es = Store.all('execs').filter(e => e.clientId === c.id && e.itemId === it.id).sort(byDate('date')).slice(-3);
+        if (es.length === 3 && es.every(e => e.status === '未執行' && e.reason !== '個案請假/未到')) out.push({ client:c, item:it, reasons:[...new Set(es.map(e => e.reason))].join('、') });
+      }
+    }
+    return out;
+  },
+
+  /* 成效指標 */
+  outcomes(){
+    const clients = Store.all('clients').filter(c => c.status !== '結案' || c.closeDate >= addMonths(todayISO(), -12));
+    let pairs = 0, keep = 0, improve = 0, goals = 0, met = 0, copmN = 0, copmUp = 0;
+    for (const c of clients) {
+      const as = this.assessmentsOf(c.id).filter(a => scoreBarthel(a) && !scoreBarthel(a).partial);
+      if (as.length >= 2) { const a0 = scoreBarthel(as.at(-2)).total, a1 = scoreBarthel(as.at(-1)).total; pairs++; if (a1 >= a0) keep++; if (a1 > a0) improve++; }
+      for (const a of this.assessmentsOf(c.id)) for (const g of (a.goalReview || [])) if (g.gas !== '' && g.gas != null) { goals++; if (+g.gas >= 0) met++; }
+      const cs = this.assessmentsOf(c.id).filter(a => (a.copm || []).some(x => x.activity && x.perf));
+      if (cs.length >= 2) { const p = a => { const v = a.copm.filter(x => x.activity && x.perf).map(x => +x.perf); return v.reduce((s, x) => s + x, 0) / v.length; }; copmN++; if (p(cs.at(-1)) - p(cs[0]) >= 2) copmUp++; }
+    }
+    const today = todayISO(), from = addDays(today, -29), idx = this.index();
+    let ex = 0, dn = 0, pa = 0, days = 0;
+    for (const c of Store.all('clients').filter(c => c.status === '服務中')) { const s = this.execStats(c, from, today, idx); ex += s.expected; dn += s.done; pa += s.partial; }
+    for (const v of Store.all('vitals')) if (v.present && v.date >= addMonths(today, -12)) days++;
+    const falls = Store.all('incidents').filter(i => i.type === '跌倒' && i.datetime?.slice(0, 10) >= addMonths(today, -12)).length;
+    return {
+      adlKeep: pct(keep, pairs), adlImprove: pct(improve, pairs), pairs,
+      goalMet: pct(met, goals), goals,
+      copmUp: pct(copmUp, copmN), copmN,
+      execRate: ex ? Math.round((dn + pa * 0.5) / ex * 100) : null, ex,
+      fallRate: days ? Math.round(falls / days * 1000 * 100) / 100 : null, falls, days,
+    };
+  },
+};
+
+/* ---- app.js ---- */
+/* ================================================================
+   App：外框、使用者切換、路由
+   ================================================================ */
+const APP_TITLE = '日照復能管理系統';
+const NAV = [
+  ['#/', 'home', '總覽'],
+  ['#/today', 'check', '今日執行'],
+  ['#/clients', 'users', '個案與處方'],
+  ['#/meetings', 'meet', '個案討論會'],
+  ['#/incidents', 'alert', '意外事件'],
+  ['#/activities', 'star', '活動與訓練'],
+  ['#/reports', 'chart', '評鑑與成效'],
+  ['#/settings', 'gear', '設定與備份'],
+];
+
+const App = {
+  currentUserId(){ try { return localStorage.getItem('rehab:user') || ''; } catch(e){ return ''; } },
+  setUser(id){ try { localStorage.setItem('rehab:user', id); } catch(e){} renderShell(); route(); },
+  toast,
+  isCareWorker(){ return staffRole(this.currentUserId()) === '照顧服務員'; },
+  go(h){ location.hash = h; },
+};
+
+function renderShell(){
+  const uid = App.currentUserId(), cur = location.hash || '#/';
+  const center = Store.DB.meta.center || '（請至設定填寫中心名稱）';
+  const nav = (App.isCareWorker() ? [NAV[1], NAV[0], ...NAV.slice(2)] : NAV);
+  $('#side').innerHTML = `
+    <div class="brand"><div class="logo">${icon('heart', 22)}</div><div><div class="b1">${APP_TITLE}</div><div class="b2">${esc(center)}</div></div></div>
+    <nav>${nav.map(([h, i, l]) => `<a href="${h}" class="${(cur === h || (h !== '#/' && cur.startsWith(h.replace(/s$/, '')))) ? 'on' : ''}">${icon(i)}<span>${l}</span></a>`).join('')}</nav>
+    <div class="side-foot">資料僅儲存於本機瀏覽器<br>請定期至「設定與備份」匯出</div>`;
+  const staff = Store.all('staff').filter(s => s.active !== false);
+  $('#top').innerHTML = `
+    <button class="icon-btn only-m" onclick="document.body.classList.toggle('nav-open')" aria-label="選單">${icon('menu')}</button>
+    <div class="top-title" id="top-title"></div><span class="sp"></span>
+    <label class="who">目前使用者
+      <select onchange="App.setUser(this.value)" class="inp sm">
+        <option value="">— 選擇 —</option>${staff.map(s => `<option value="${s.id}" ${s.id === uid ? 'selected' : ''}>${esc(s.name)}（${esc(s.role)}）</option>`).join('')}
+      </select></label>`;
+}
+function setTitle(t, sub = ''){ $('#top-title').innerHTML = `<b>${esc(t)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}`; document.title = t + '｜' + APP_TITLE; }
+
+const ROUTES = [
+  [/^#?\/?$/, () => pageDashboard()],
+  [/^#\/today$/, () => pageToday()],
+  [/^#\/clients$/, () => pageClients()],
+  [/^#\/client\/([^/]+)(?:\/(\w+))?$/, m => pageClient(m[1], m[2] || 'overview')],
+  [/^#\/assess\/new\/([^/]+)(?:\/([^/?]+))?$/, m => pageAssessEdit(null, m[1], m[2])],
+  [/^#\/assess\/([^/]+)$/, m => pageAssessEdit(m[1])],
+  [/^#\/plan\/new\/([^/?]+)(?:\?(.*))?$/, m => pagePlanEdit(null, m[1], new URLSearchParams(m[2] || ''))],
+  [/^#\/plan\/([^/]+)$/, m => pagePlanEdit(m[1])],
+  [/^#\/meetings$/, () => pageMeetings()],
+  [/^#\/meeting\/([^/]+)$/, m => pageMeetingEdit(m[1])],
+  [/^#\/incidents$/, () => pageIncidents()],
+  [/^#\/incident\/([^/?]+)(?:\?(.*))?$/, m => pageIncidentEdit(m[1], new URLSearchParams(m[2] || ''))],
+  [/^#\/activities$/, () => pageActivities()],
+  [/^#\/reports$/, () => pageReports()],
+  [/^#\/settings$/, () => pageSettings()],
+];
+let ignoreHash = false;
+function route(){
+  let h = location.hash || '#/'; try { h = decodeURIComponent(h); } catch(e){}
+  for (const [re, fn] of ROUTES) {
+    const m = h.match(re);
+    if (m) { S.edit = null; S.onEdit = null; S.dirty = false; const html = fn(m); if (html != null) { $('#main').innerHTML = html; } $('#main').scrollTop = 0; window.scrollTo(0, 0); S.lastHash = h; renderShellNav(); return; }
+  }
+  location.hash = '#/';
+}
+function renderShellNav(){ let cur = location.hash || '#/'; if (/^#\/(assess|plan)\//.test(cur)) cur = '#/client/'; document.querySelectorAll('#side nav a').forEach(a => { const h = a.getAttribute('href'); a.classList.toggle('on', cur === h || (h !== '#/' && cur.startsWith(h.replace(/s$/, '')))); }); document.body.classList.remove('nav-open'); }
+window.addEventListener('hashchange', () => {
+  if (ignoreHash) { ignoreHash = false; return; }
+  if (S.dirty && !askConfirm('目前編輯的內容尚未儲存，確定要離開嗎？')) { ignoreHash = true; location.hash = S.lastHash; return; }
+  route();
+});
+window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
+/* 重新繪製目前頁面但保留編輯狀態 */
+function rerender(fn){ const y = window.scrollY; $('#main').innerHTML = fn(); window.scrollTo(0, y); }
+
+async function init(){
+  await Store.load();
+  renderShell();
+  if (!Store.all('staff').length) { location.hash = '#/settings'; }
+  route();
+  if (!Store.all('staff').length) setTimeout(() => openWelcome(), 200);
+}
+function openWelcome(){
+  openModal('歡迎使用日照復能管理系統', `
+    <p>本系統協助日間照顧中心完成 <b>評估 → 開立復能處方 → 照服員執行紀錄 → 再評估 → 修正處方</b> 的完整循環，並依《社區式日間照顧長照機構評鑑基準》自動檢核 B1、B3、B5–B11 等指標。</p>
+    <ul class="list">
+      <li>所有資料只存在<b>這台電腦的瀏覽器</b>，不會上傳到網路。</li>
+      <li>請先到「設定與備份」建立中心名稱與工作人員，再於右上角選擇「目前使用者」。</li>
+      <li>想先看看操作方式，可以載入示範資料（之後可一鍵清除）。</li>
+    </ul>`, { saveLabel:'載入示範資料', onSave:() => { loadDemo(); } });
+}
+document.addEventListener('DOMContentLoaded', init);
+
+/* ---- pages-main.js ---- */
+/* ================================================================
+   頁面：總覽、今日執行（照服員）、個案列表、個案詳細
+   ================================================================ */
+
+/* ---------------- 總覽 ---------------- */
+function pageDashboard(){
+  setTitle('總覽', rocDate(todayISO()) + '（星期' + WEEKDAYS[weekday(todayISO())] + '）');
+  const today = todayISO(), active = Store.all('clients').filter(c => c.status === '服務中');
+  const idx = Logic.index();
+  let tExp = 0, tDone = 0;
+  active.forEach(c => { const s = Logic.execStats(c, today, today, idx); tExp += s.expected; tDone += s.done + s.partial; });
+  const oc = Logic.outcomes();
+  const todo = [];
+  for (const c of active) {
+    const ck = Logic.clientChecks(c), link = `#/client/${c.id}`;
+    if (!ck.last) todo.push({ lv:'high', t:`${c.name}：尚未完成初評`, a:`<a class="btn sm primary" href="#/assess/new/${c.id}/初評">開始初評</a>` });
+    else if (!ck.hasPlan) todo.push({ lv:'high', t:`${c.name}：已評估但尚未開立復能處方`, a:`<a class="btn sm primary" href="#/plan/new/${c.id}?from=${ck.last.id}">開立處方</a>` });
+    if (ck.reassessDue) {
+      const d = diffDays(today, ck.reassessDue.date);
+      if (d < 0) todo.push({ lv:'high', t:`${c.name}：再評估已逾期 ${-d} 天（${ck.reassessDue.why} ${rocDate(ck.reassessDue.date)}）`, a:`<a class="btn sm primary" href="#/assess/new/${c.id}/再評">進行再評</a>` });
+      else if (d <= 21) todo.push({ lv:'mid', t:`${c.name}：${d} 天後需再評估（${rocDate(ck.reassessDue.date)}）`, a:`<a class="btn sm" href="#/assess/new/${c.id}/再評">進行再評</a>` });
+    }
+    if (ck.last && !ck.referralOK) todo.push({ lv:'mid', t:`${c.name}：評估顯示需轉介（${ck.flagged.map(f => f.referral).join('；')}），處方尚無轉介紀錄`, a:`<a class="btn sm" href="#/plan/${ck.plan?.id || ''}">補轉介</a>` });
+    if ((ck.lastContact ? diffDays(ck.lastContact, today) : diffDays(c.admitDate || today, today)) > 90) todo.push({ lv:'low', t:`${c.name}：超過3個月未有家屬聯繫紀錄（B8）`, a:`<a class="btn sm" href="${link}/contacts">新增聯繫</a>` });
+  }
+  const lm = Logic.lastMeeting();
+  const mDue = lm ? addMonths(lm.date, MEETING_MONTHS) : null;
+  if (!lm) todo.push({ lv:'high', t:'尚無跨專業個案討論會紀錄（每3個月至少1次）', a:`<a class="btn sm primary" href="#/meeting/new">建立會議</a>` });
+  else if (diffDays(today, mDue) < 0) todo.push({ lv:'high', t:`跨專業個案討論會已逾期（上次 ${rocDate(lm.date)}）`, a:`<a class="btn sm primary" href="#/meeting/new">建立會議</a>` });
+  else if (diffDays(today, mDue) <= 21) todo.push({ lv:'mid', t:`下次跨專業個案討論會請於 ${rocDate(mDue)} 前召開`, a:`<a class="btn sm" href="#/meeting/new">建立會議</a>` });
+  const od = Logic.openDecisions().filter(d => d.due && d.due < today);
+  od.forEach(d => todo.push({ lv:'mid', t:`討論會決議逾期未完成：${d.text}（${d.clientId ? clientName(d.clientId) + '，' : ''}負責：${staffName(d.owner) || '未指定'}）`, a:`<a class="btn sm" href="#/meeting/${d.meetingId}">查看</a>` }));
+  Store.all('incidents').filter(i => !i.closed && (!i.analysis || !i.improvement)).forEach(i => todo.push({ lv:'mid', t:`意外事件待完成分析與改善：${clientName(i.clientId)} ${i.type}（${rocDate(i.datetime)}）`, a:`<a class="btn sm" href="#/incident/${i.id}">補寫</a>` }));
+  const ym = today.slice(0, 7);
+  if (!Store.all('activities').some(a => a.date?.startsWith(ym) && (a.kind === '團體活動' || a.kind === '社區活動'))) todo.push({ lv:'low', t:'本月尚未登錄團體或社區活動（B7 每月至少1次）', a:`<a class="btn sm" href="#/activities">登錄活動</a>` });
+  const order = { high:0, mid:1, low:2 }; todo.sort((a, b) => order[a.lv] - order[b.lv]);
+
+  const alerts = Logic.alerts(), skips = Logic.repeatedSkips();
+  return `
+  <div class="kpis">
+    <div class="kpi"><div class="k-n">${active.length}</div><div class="k-l">服務中個案</div></div>
+    <div class="kpi"><div class="k-n">${tExp ? tDone + '/' + tExp : '—'}</div><div class="k-l">今日處方已記錄</div><div class="bar"><i style="width:${pct(tDone, tExp) || 0}%"></i></div></div>
+    <div class="kpi"><div class="k-n">${oc.execRate ?? '—'}<small>%</small></div><div class="k-l">近30天處方執行率</div></div>
+    <div class="kpi"><div class="k-n">${oc.adlKeep ?? '—'}<small>%</small></div><div class="k-l">ADL 維持或進步率（${oc.pairs} 人）</div></div>
+    <div class="kpi"><div class="k-n">${oc.goalMet ?? '—'}<small>%</small></div><div class="k-l">復能目標達成率（${oc.goals} 項）</div></div>
+  </div>
+  <div class="grid2">
+    <section class="card"><h2>待辦與評鑑提醒 <small>${todo.length} 項</small></h2>
+      ${todo.length ? `<ul class="todo">${todo.map(t => `<li class="lv-${t.lv}"><span class="dot"></span><span class="tt">${esc(t.t)}</span>${t.a}</li>`).join('')}</ul>` : empty('目前沒有待辦事項 👍')}
+    </section>
+    <section class="card"><h2>照服員回報 <small>需治療師/護理師注意</small></h2>
+      ${alerts.length ? `<ul class="todo">${alerts.map(e => `<li class="lv-high"><span class="dot"></span><span class="tt"><b>${esc(clientName(e.clientId))}</b> ${rocDate(e.date)}｜${esc(e.itemName || '')}｜${esc(e.tolerance || '')}${e.note ? '：' + esc(e.note) : ''}<br><small>回報：${esc(staffName(e.staffId || e.updatedBy))}</small></span>${btn('已處理', `ackAlert('${e.id}')`, { k:'sm' })}</li>`).join('')}</ul>` : empty('近7天沒有不適或異常回報')}
+      ${skips.length ? `<h3>連續3次未執行</h3><ul class="todo">${skips.map(s => `<li class="lv-mid"><span class="dot"></span><span class="tt">${esc(s.client.name)}：${esc(s.item.name)}（${esc(s.reasons)}）→ 建議檢討處方</span><a class="btn sm" href="#/client/${s.client.id}/plan">檢視</a></li>`).join('')}</ul>` : ''}
+    </section>
+  </div>
+  <section class="card"><h2>復能循環</h2>
+    <div class="cycle">${[['評估','巴氏、IADL、SPMSQ、體能、GDS、MNA-SF、身心社會'],['開立處方','問題→目標→處方項目→頻率'],['照服員執行','每日勾選完成度、協助程度、耐受度'],['再評估','≤6個月或處方再評日、目標達成 GAS'],['修正處方','保留版本與修正理由']].map(([a, b], i) => `<div class="step"><div class="sn">${i + 1}</div><b>${a}</b><small>${b}</small></div>`).join('<div class="arrow">→</div>')}</div>
+  </section>`;
+}
+function ackAlert(id){ const e = Store.get('execs', id); if (!e) return; e.ack = { by:App.currentUserId(), at:new Date().toISOString() }; Store.upsert('execs', e); route(); }
+
+/* ---------------- 今日執行（照服員） ---------------- */
+function pageToday(){
+  const d = S.todayDate, w = weekday(d);
+  setTitle('今日執行紀錄', rocDate(d) + '（星期' + WEEKDAYS[w] + '）');
+  const idx = Logic.index();
+  let list = Store.all('clients').filter(c => c.status === '服務中').sort(byDate('name'));
+  const scheduled = list.filter(c => (c.attendDays || []).includes(w) || idx.vi.has(c.id + '|' + d));
+  if (!S.showAllToday) list = scheduled;
+  let exp = 0, rec = 0;
+  const cards = list.map(c => {
+    const plan = Logic.planOn(c.id, d), items = Logic.itemsOn(plan, d), v = idx.vi.get(c.id + '|' + d);
+    const absent = v?.present === false;
+    if (!absent) { exp += items.length; rec += items.filter(it => idx.ex.has(c.id + '|' + it.id + '|' + d)).length; }
+    const done = items.filter(it => idx.ex.has(c.id + '|' + it.id + '|' + d)).length;
+    const tempWarn = v?.temp && (+v.temp >= 37.5 || +v.temp < 35.5);
+    return `<article class="tcard ${absent ? 'absent' : ''}" id="tc-${c.id}">
+      <header>
+        <div class="av">${esc(c.name.slice(0, 1))}</div>
+        <div class="tn"><b>${esc(c.name)}</b><small>${esc([c.gender, ageAt(c.birth) ? ageAt(c.birth) + '歲' : '', c.aids, c.diet].filter(Boolean).join('・'))}</small></div>
+        <div class="att">
+          <button class="seg ${v?.present === true ? 'on' : ''}" onclick="setPresent('${c.id}',true)">出席</button><button class="seg ${absent ? 'on warn' : ''}" onclick="setPresent('${c.id}',false)">請假</button>
+          <label class="temp ${tempWarn ? 'warn' : ''}">體溫<input type="number" step="0.1" min="34" max="42" inputmode="decimal" value="${esc(v?.temp ?? '')}" onchange="setTemp('${c.id}',this.value)" aria-label="${esc(c.name)} 體溫">°C</label>
+        </div>
+      </header>
+      ${absent ? '<div class="muted pad">今日請假，不需執行處方。</div>' : !plan ? '<div class="muted pad">尚無生效中的復能處方。</div>' : !items.length ? '<div class="muted pad">今日（星期' + WEEKDAYS[w] + '）沒有排定的處方項目。</div>' : `
+      <div class="tprog"><span>${done}/${items.length} 已記錄</span><div class="bar"><i style="width:${pct(done, items.length)}%"></i></div></div>
+      <ul class="items">${items.map(it => execRow(c, it, plan, d, idx)).join('')}</ul>`}
+    </article>`;
+  }).join('');
+  return `
+  <div class="toolbar">
+    <button class="btn" onclick="S.todayDate=addDays(S.todayDate,-1);route()">${icon('back', 16)}前一天</button>
+    <input type="date" class="inp" value="${d}" onchange="S.todayDate=this.value||todayISO();route()" aria-label="日期">
+    <button class="btn" onclick="S.todayDate=addDays(S.todayDate,1);route()">後一天</button>
+    ${d !== todayISO() ? `<button class="btn" onclick="S.todayDate=todayISO();route()">回到今天</button>` : ''}
+    <span class="sp"></span>
+    <label class="chk"><input type="checkbox" ${S.showAllToday ? 'checked' : ''} onchange="S.showAllToday=this.checked;route()"><span>顯示非到班日個案</span></label>
+  </div>
+  ${!App.currentUserId() ? `<div class="notice warn">請先於右上角選擇「目前使用者」，紀錄才會留下執行人員姓名。</div>` : ''}
+  <div class="notice">今日共 <b>${list.length}</b> 位個案，處方項目已記錄 <b>${rec}/${exp}</b>。執行時請掌握「<b>最少必要協助</b>」：讓長輩自己做得到的部分自己做（自立支援，B10）。</div>
+  <div class="tgrid">${cards || empty('今天沒有排定到班的個案。', `<button class="btn" onclick="S.showAllToday=true;route()">顯示全部個案</button>`)}</div>`;
+}
+function execRow(c, it, plan, d, idx){
+  const e = idx.ex.get(c.id + '|' + it.id + '|' + d), key = c.id + '|' + it.id;
+  const open = S.openExec === key;
+  const st = e?.status;
+  return `<li class="it ${st ? 'st-' + ({ 完成:'ok', 部分:'part', 未執行:'skip' })[st] : ''}">
+    <div class="it-main">
+      <div class="it-t"><b>${esc(it.name)}</b>${it.selfcare ? badge('自立支援', 'green') : ''}<small>${esc(it.dose || '')}${it.assist ? '｜目標：' + esc(it.assist) : ''}</small></div>
+      <div class="it-b">
+        <button class="sbtn ok ${st === '完成' ? 'on' : ''}" onclick="markExec('${c.id}','${it.id}','完成')" aria-label="完成">✓<span>完成</span></button>
+        <button class="sbtn part ${st === '部分' ? 'on' : ''}" onclick="markExec('${c.id}','${it.id}','部分')" aria-label="部分完成">△<span>部分</span></button>
+        <button class="sbtn skip ${st === '未執行' ? 'on' : ''}" onclick="markExec('${c.id}','${it.id}','未執行')" aria-label="未執行">✕<span>未執行</span></button>
+        <button class="sbtn more" onclick="S.openExec=S.openExec==='${key}'?null:'${key}';refreshTodayCard('${c.id}')" aria-label="詳細">${open ? '收合' : '詳細'}</button>
+      </div>
+    </div>
+    ${open ? `<div class="it-detail">
+      <div class="how"><b>執行方式：</b>${esc(it.how || '')}${it.caution ? `<br><b class="warn-t">注意：</b>${esc(it.caution)}` : ''}</div>
+      <div class="row3">
+        <label class="field"><span class="lbl">實際協助程度</span><select class="inp" onchange="patchExec('${c.id}','${it.id}','assist',this.value)"><option value="">—</option>${ASSIST_LEVELS.map(a => `<option ${e?.assist === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+        <label class="field"><span class="lbl">耐受度/反應</span><select class="inp" onchange="patchExec('${c.id}','${it.id}','tolerance',this.value)"><option value="">—</option>${TOLERANCE.map(a => `<option ${e?.tolerance === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+        <label class="field"><span class="lbl">實際量（次數/時間/距離）</span><input class="inp" value="${esc(e?.amount || '')}" placeholder="例：10下×2組" onchange="patchExec('${c.id}','${it.id}','amount',this.value)"></label>
+      </div>
+      ${st === '未執行' ? `<label class="field"><span class="lbl">未執行原因</span><div class="pills">${SKIP_REASONS.map(r => `<label class="pill"><input type="radio" name="rs-${key}" ${e?.reason === r ? 'checked' : ''} onchange="patchExec('${c.id}','${it.id}','reason','${r}')"><span>${r}</span></label>`).join('')}</div></label>` : ''}
+      <label class="field"><span class="lbl">觀察紀錄</span><textarea class="inp" rows="2" placeholder="長輩今天的表現、進步或困難…" onchange="patchExec('${c.id}','${it.id}','note',this.value)">${esc(e?.note || '')}</textarea></label>
+      <label class="chk"><input type="checkbox" ${e?.flag ? 'checked' : ''} onchange="patchExec('${c.id}','${it.id}','flag',this.checked)"><span>需治療師/護理師注意（會出現在總覽提醒）</span></label>
+    </div>` : ''}
+  </li>`;
+}
+function findExec(cid, iid, d){ return Store.all('execs').find(e => e.clientId === cid && e.itemId === iid && e.date === d); }
+function markExec(cid, iid, status){
+  const d = S.todayDate, plan = Logic.planOn(cid, d), it = plan?.items.find(x => x.id === iid); if (!it) return;
+  let e = findExec(cid, iid, d);
+  if (e && e.status === status) { Store.remove('execs', e.id); refreshTodayCard(cid); return; } // 再按一次取消
+  e = e || { clientId:cid, itemId:iid, date:d };
+  Object.assign(e, { status, planId:plan.id, itemName:it.name, cat:it.cat, staffId:App.currentUserId() });
+  if (status !== '未執行') delete e.reason;
+  if (status === '完成' && !e.amount) e.amount = it.dose;
+  Store.upsert('execs', e);
+  if (status === '未執行') S.openExec = cid + '|' + iid;
+  ensurePresent(cid, d);
+  refreshTodayCard(cid);
+}
+function patchExec(cid, iid, k, v){
+  const d = S.todayDate; let e = findExec(cid, iid, d);
+  if (!e) { const plan = Logic.planOn(cid, d), it = plan?.items.find(x => x.id === iid); e = { clientId:cid, itemId:iid, date:d, status:'部分', planId:plan?.id, itemName:it?.name, cat:it?.cat, staffId:App.currentUserId() }; }
+  e[k] = v; if (k === 'tolerance' && v === '不適停止') e.flag = true;
+  Store.upsert('execs', e); if (k === 'tolerance' || k === 'flag') refreshTodayCard(cid);
+}
+function ensurePresent(cid, d){ let v = Store.all('vitals').find(x => x.clientId === cid && x.date === d); if (!v) Store.upsert('vitals', { clientId:cid, date:d, present:true }); }
+function setPresent(cid, p){ const d = S.todayDate; let v = Store.all('vitals').find(x => x.clientId === cid && x.date === d) || { clientId:cid, date:d }; v.present = v.present === p ? null : p; Store.upsert('vitals', v); refreshTodayCard(cid); }
+function setTemp(cid, t){ const d = S.todayDate; let v = Store.all('vitals').find(x => x.clientId === cid && x.date === d) || { clientId:cid, date:d }; v.temp = t === '' ? '' : +t; if (t !== '' && v.present == null) v.present = true; Store.upsert('vitals', v); if (t && (+t >= 37.5 || +t < 35.5)) toast(`${clientName(cid)} 體溫 ${t}°C 異常，請通知護理師`, 'err'); refreshTodayCard(cid); }
+function refreshTodayCard(cid){
+  const html = pageToday(); const tmp = document.createElement('div'); tmp.innerHTML = html;
+  const n = tmp.querySelector('#tc-' + cid), o = document.getElementById('tc-' + cid);
+  if (n && o) o.replaceWith(n); else rerender(() => html);
+  const nt = tmp.querySelector('.notice:not(.warn)'), ot = document.querySelector('#main .notice:not(.warn)'); if (nt && ot) ot.replaceWith(nt);
+}
+
+/* ---------------- 個案列表 ---------------- */
+let clientFilter = { q:'', status:'服務中' };
+function pageClients(){
+  setTitle('個案與復能處方');
+  const today = todayISO(), idx = Logic.index();
+  const list = Store.all('clients').filter(c => (!clientFilter.status || c.status === clientFilter.status) && (!clientFilter.q || c.name.includes(clientFilter.q))).sort(byDate('name'));
+  const rows = list.map(c => {
+    const last = Logic.lastAssessment(c.id), plan = Logic.activePlan(c.id), due = Logic.reassessDue(c.id), b = scoreBarthel(last);
+    const st = plan ? Logic.execStats(c, addDays(today, -29), today, idx) : null;
+    const dd = due ? diffDays(today, due.date) : null;
+    return `<tr onclick="App.go('#/client/${c.id}')" class="click">
+      <td><b>${esc(c.name)}</b>${c.dementia ? ' ' + badge('失智', 'purple') : ''}</td>
+      <td>${esc(c.gender || '')} ${ageAt(c.birth) ?? ''}</td><td>${esc(CMS_LEVELS[c.cmsLevel] || '')}</td>
+      <td>${last ? rocDate(last.date) + ' ' + badge(last.type) : badge('未評估', 'red')}</td>
+      <td>${b ? b.total : '—'}</td>
+      <td>${plan ? `v${plan.version}（${(plan.items || []).length}項）` : badge('無處方', 'red')}</td>
+      <td>${due ? `${rocDate(due.date)} ${dd < 0 ? badge('逾期', 'red') : dd <= 21 ? badge(dd + '天', 'amber') : ''}` : '—'}</td>
+      <td>${st && st.rate != null ? `<div class="mini-bar"><i style="width:${st.rate}%"></i></div>${st.rate}%` : '—'}</td></tr>`;
+  }).join('');
+  return `
+  <div class="toolbar">
+    <input class="inp" placeholder="搜尋姓名" value="${esc(clientFilter.q)}" oninput="clientFilter.q=this.value;rerenderClients()" aria-label="搜尋">
+    <select class="inp" onchange="clientFilter.status=this.value;rerenderClients()" aria-label="狀態">${['服務中', '暫停', '結案', ''].map(s => `<option value="${s}" ${clientFilter.status === s ? 'selected' : ''}>${s || '全部'}</option>`).join('')}</select>
+    <span class="sp"></span>${btn('新增個案', 'editClient()', { k:'primary', i:'plus' })}
+  </div>
+  <div class="card flush"><div class="tbl-wrap"><table class="tbl" id="client-table">
+    <thead><tr><th>姓名</th><th>性別/年齡</th><th>CMS</th><th>最近評估</th><th>巴氏</th><th>生效處方</th><th>下次再評</th><th>近30天執行率</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="8">${empty('尚無個案資料')}</td></tr>`}</tbody></table></div></div>`;
+}
+function rerenderClients(){ const t = document.createElement('div'); t.innerHTML = pageClients(); $('#client-table').replaceWith(t.querySelector('#client-table')); }
+
+function editClient(id){
+  const c = id ? clone(Store.get('clients', id)) : { status:'服務中', attendDays:[1, 2, 3, 4, 5], admitDate:todayISO(), gender:'女' };
+  S.edit = c;
+  const html = `<div class="form-grid">
+    ${F.field('姓名', F.input('name'), { req:true })}
+    ${F.field('性別', F.radios('gender', ['女', '男']))}
+    ${F.field('出生日期', F.date('birth'))}
+    ${F.field('身分證字號（選填）', F.input('idno', { ph:'可留空以減少個資' }))}
+    ${F.field('長照需要等級 CMS', F.select('cmsLevel', CMS_LEVELS.slice(1).map((l, i) => [i + 1, l]), { t:'num' }))}
+    ${F.field('收案日期', F.date('admitDate'), { req:true })}
+    ${F.field('服務狀態', F.select('status', ['服務中', '暫停', '結案'], { blank:false }))}
+    ${F.field('結案日期', F.date('closeDate'))}
+    ${F.field('固定到班日', `<div class="pills">${[1, 2, 3, 4, 5, 6, 7].map(w => F.checkArr('attendDays', w, '週' + WEEKDAYS[w], true)).join('')}</div>`, { cls:'span2' })}
+    ${F.field('主要診斷／疾病史', F.text('diagnoses', { rows:2, ph:'例：腦中風（右側偏癱）、高血壓、糖尿病' }), { cls:'span2' })}
+    ${F.field('失智症', F.check('dementia', '已確診失智症'))}
+    ${F.field('飲食質地', F.select('diet', ['一般', '軟質', '細碎', '泥狀', '流質', '管灌']))}
+    ${F.field('使用輔具', F.input('aids', { ph:'例：四腳拐、輪椅、助行器' }))}
+    ${F.field('過敏／特殊注意', F.input('allergy'))}
+    ${F.field('主要照顧者', F.input('cgName'))}
+    ${F.field('關係', F.input('cgRel', { ph:'例：女兒' }))}
+    ${F.field('聯絡電話', F.input('cgPhone', { type:'tel' }))}
+    ${F.field('備註', F.input('note'))}
+  </div>`;
+  openModal(id ? '編輯個案資料' : '新增個案', html, { wide:true, onSave:() => {
+    if (!S.edit.name?.trim()) { toast('請填寫姓名', 'err'); return false; }
+    if (!S.edit.admitDate) { toast('請填寫收案日期', 'err'); return false; }
+    if (S.edit.status === '結案' && !S.edit.closeDate) S.edit.closeDate = todayISO();
+    const saved = Store.upsert('clients', S.edit); S.dirty = false;
+    toast('已儲存個案資料');
+    if (!id) App.go('#/client/' + saved.id); else route();
+  }, restore:() => { S.dirty = false; } });
+}
+
+/* ---------------- 個案詳細 ---------------- */
+const CLIENT_TABS = [['overview', '概要'], ['assess', '評估紀錄'], ['plan', '復能處方'], ['exec', '執行紀錄'], ['outcome', '成效歷程'], ['contacts', '家屬聯繫'], ['incidents', '意外事件']];
+function pageClient(id, tab){
+  const c = Store.get('clients', id); if (!c) { App.go('#/clients'); return ''; }
+  setTitle(c.name, [c.gender, ageAt(c.birth) ? ageAt(c.birth) + '歲' : '', CMS_LEVELS[c.cmsLevel]].filter(Boolean).join('・'));
+  const body = { overview:clientOverview, assess:clientAssess, plan:clientPlans, exec:clientExec, outcome:clientOutcome, contacts:clientContacts, incidents:clientIncidents }[tab] || clientOverview;
+  return `
+  <div class="toolbar">
+    <a class="btn" href="#/clients">${icon('back', 16)}個案列表</a>
+    <span class="sp"></span>
+    ${btn('編輯基本資料', `editClient('${c.id}')`, { i:'edit' })}
+    <a class="btn" href="#/assess/new/${c.id}/${Logic.lastAssessment(c.id) ? '再評' : '初評'}">${icon('clip', 16)}${Logic.lastAssessment(c.id) ? '進行再評估' : '進行初評'}</a>
+    ${btn('列印復能歷程報告', `printClientDossier('${c.id}')`, { i:'print' })}
+  </div>
+  <div class="tabs" role="tablist">${CLIENT_TABS.map(([k, l]) => `<a role="tab" href="#/client/${c.id}/${k}" class="${tab === k ? 'on' : ''}">${l}</a>`).join('')}</div>
+  ${body(c)}`;
+}
+function infoGrid(pairs){ return `<dl class="info">${pairs.filter(p => p[1] !== undefined).map(([k, v]) => `<div><dt>${k}</dt><dd>${v || '—'}</dd></div>`).join('')}</dl>`; }
+
+function clientOverview(c){
+  const ck = Logic.clientChecks(c), plan = ck.plan, last = ck.last, today = todayISO();
+  const chk = (ok, t, extra = '') => `<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✕'} ${t}${extra ? ' <small>' + extra + '</small>' : ''}</li>`;
+  return `<div class="grid2">
+    <section class="card"><h2>基本資料</h2>${infoGrid([
+      ['收案日', rocDate(c.admitDate)], ['狀態', esc(c.status)], ['到班日', (c.attendDays || []).map(w => '週' + WEEKDAYS[w]).join('、')],
+      ['診斷', esc(c.diagnoses)], ['失智症', c.dementia ? '是' : '否'], ['飲食質地', esc(c.diet)], ['輔具', esc(c.aids)], ['過敏/注意', esc(c.allergy)],
+      ['主要照顧者', esc([c.cgName, c.cgRel].filter(Boolean).join('／'))], ['電話', esc(c.cgPhone)]])}</section>
+    <section class="card"><h2>評鑑 B1 個案檢核</h2><ul class="checks">
+      ${chk(!!last, '已完成需求評估', last ? rocDate(last.date) + ' ' + last.type : '')}
+      ${chk(ck.domains, '評估涵蓋生理、心理認知、家庭社會支持、重大生命事件')}
+      ${chk(ck.hasPlan, '訂有個別化復能處方（服務計畫）', plan ? 'v' + plan.version + '，' + rocDate(plan.startDate) + ' 起' : '')}
+      ${chk(ck.planFromAssess, '處方依評估結果訂定問題、目標與項目')}
+      ${chk(ck.execRecorded, '近30天執行紀錄完整（缺漏<20%）', ck.st ? `執行率 ${ck.st.rate ?? '—'}%，未記錄 ${ck.st.missing} 筆` : '')}
+      ${chk(ck.reassessOK, '再評估未逾期（≤6個月）', ck.reassessDue ? '下次：' + rocDate(ck.reassessDue.date) : '')}
+      ${chk(ck.referralOK, '依需求轉介', ck.flagged.length ? ck.flagged.map(f => f.referral).join('；') : '無轉介需求')}
+      ${chk(ck.lastContact && diffDays(ck.lastContact, today) <= 90, '近3個月有家屬聯繫紀錄（B8）', ck.lastContact ? '最近：' + rocDate(ck.lastContact) : '')}
+    </ul></section>
+  </div>
+  <section class="card"><h2>目前生效的復能處方 ${plan ? `<small>v${plan.version}｜開立：${esc(staffName(plan.prescriberId))}｜預定再評：${rocDate(plan.reviewDate)}</small>` : ''}</h2>
+    ${plan ? planSummary(plan) : empty('尚未開立復能處方', last ? `<a class="btn primary" href="#/plan/new/${c.id}?from=${last.id}">依最新評估開立處方</a>` : `<a class="btn primary" href="#/assess/new/${c.id}/初評">先進行初評</a>`)}
+  </section>`;
+}
+function planSummary(p){
+  return `<div class="grid2 tight">
+    <div><h3>問題</h3><ol class="list">${(p.problems || []).map(x => `<li>${esc(x)}</li>`).join('') || '<li class="muted">—</li>'}</ol>
+    <h3>長期目標</h3><p>${esc(p.longGoal || '—')}</p>
+    <h3>短期目標</h3><ol class="list">${(p.goals || []).map(g => `<li>${esc(g.text)} <small class="muted">（${esc(g.measure || '')}：${esc(g.baseline || '?')} → ${esc(g.target || '?')}，${rocDate(g.due)}）</small></li>`).join('') || '<li class="muted">—</li>'}</ol></div>
+    <div><h3>處方項目</h3><table class="tbl sm"><thead><tr><th>項目</th><th>劑量</th><th>頻率</th></tr></thead><tbody>${(p.items || []).map(it => `<tr><td>${esc(it.name)}${it.selfcare ? ' ' + badge('自立', 'green') : ''}</td><td>${esc(it.dose)}</td><td>${(it.days || []).map(w => WEEKDAYS[w]).join('')}</td></tr>`).join('')}</tbody></table>
+    ${(p.referrals || []).filter(r => r.to).length ? `<h3>轉介</h3><ul class="list">${p.referrals.filter(r => r.to).map(r => `<li>${esc(r.to)}：${esc(r.reason || '')} ${r.result ? '→ ' + esc(r.result) : ''}</li>`).join('')}</ul>` : ''}</div>
+  </div>`;
+}
+
+function clientAssess(c){
+  const as = Logic.assessmentsOf(c.id).reverse();
+  if (!as.length) return `<section class="card">${empty('尚無評估紀錄', `<a class="btn primary" href="#/assess/new/${c.id}/初評">進行初評</a>`)}</section>`;
+  return `<section class="card flush"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>日期</th><th>類別</th><th>評估者</th><th>巴氏</th><th>IADL</th><th>SPMSQ錯</th><th>TUG秒</th><th>30秒坐站</th><th>握力</th><th>步速</th><th>GDS</th><th>MNA</th><th></th></tr></thead>
+    <tbody>${as.map(a => { const b = scoreBarthel(a), i = scoreIADL(a), s = scoreSPMSQ(a), g = scoreGDS(a), m = scoreMNA(a), p = a.phy || {};
+      return `<tr><td>${rocDate(a.date)}</td><td>${badge(a.type)}</td><td>${esc(staffName(a.assessorId))}</td><td>${b ? b.total : '—'}</td><td>${i ? i.total + '/8' : '—'}</td><td>${s ? s.errors : '—'}</td><td>${p.tug || '—'}</td><td>${p.cs30 || '—'}</td><td>${p.grip || '—'}</td><td>${gaitSpeed(a) ?? '—'}</td><td>${g ? g.total : '—'}</td><td>${m ? m.total : '—'}</td>
+      <td class="nowrap"><a class="btn sm" href="#/assess/${a.id}">開啟</a> ${btn('列印', `printAssessment('${a.id}')`, { k:'sm' })}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+}
+
+function clientPlans(c){
+  const ps = Logic.plansOf(c.id).reverse(), active = Logic.activePlan(c.id), last = Logic.lastAssessment(c.id);
+  return `<div class="toolbar">${last ? `<a class="btn primary" href="#/plan/new/${c.id}?from=${last.id}${active ? '&revise=' + active.id : ''}">${icon('rx', 16)}${active ? '依最新評估修正處方' : '依最新評估開立處方'}</a>` : ''}
+    ${active ? `<a class="btn" href="#/plan/new/${c.id}?revise=${active.id}">小幅修正（不重新評估）</a>${btn('列印處方箋', `printPlan('${active.id}')`, { i:'print' })}` : ''}</div>
+  ${ps.length ? ps.map(p => `<section class="card ${p.status === '執行中' ? 'hl' : 'dim'}"><h2>v${p.version}　${badge(p.status, p.status === '執行中' ? 'green' : '')}
+    <small>${rocDate(p.startDate)} ～ ${p.endDate ? rocDate(p.endDate) : '（預定再評 ' + rocDate(p.reviewDate) + '）'}｜開立：${esc(staffName(p.prescriberId))}</small>
+    <span class="sp"></span><a class="btn sm" href="#/plan/${p.id}">${p.status === '執行中' ? '編輯' : '檢視'}</a>${btn('列印', `printPlan('${p.id}')`, { k:'sm' })}</h2>
+    ${p.changeReason ? `<div class="notice">修正理由：${esc(p.changeReason)}</div>` : ''}${planSummary(p)}</section>`).join('') : `<section class="card">${empty('尚無處方')}</section>`}`;
+}
+
+function clientExec(c){
+  const today = todayISO(), from = addDays(today, -27), idx = Logic.index();
+  const days = []; for (let d = from; d <= today; d = addDays(d, 1)) days.push(d);
+  const plan = Logic.activePlan(c.id); const items = plan ? plan.items : [];
+  const st = Logic.execStats(c, from, today, idx);
+  const sym = { 完成:'✓', 部分:'△', 未執行:'✕' };
+  const grid = items.map(it => `<tr><th class="sticky">${esc(it.name)}</th>${days.map(d => {
+    const p = Logic.planOn(c.id, d), sched = Logic.itemsOn(p, d).some(x => x.id === it.id) && Logic.expected(c, d, idx);
+    const e = idx.ex.get(c.id + '|' + it.id + '|' + d);
+    return `<td class="g ${e ? 'g-' + ({ 完成:'ok', 部分:'part', 未執行:'skip' })[e.status] : sched && d <= today ? 'g-miss' : ''}" title="${rocDate(d)} ${e ? e.status + (e.reason ? '（' + e.reason + '）' : '') + (e.note ? '：' + e.note : '') : sched ? '未記錄' : ''}">${e ? sym[e.status] : sched ? '·' : ''}</td>`; }).join('')}<td>${st.byItem[it.id] ? Math.round((st.byItem[it.id].done + st.byItem[it.id].partial * 0.5) / st.byItem[it.id].expected * 100) + '%' : '—'}</td></tr>`).join('');
+  const notes = Store.all('execs').filter(e => e.clientId === c.id && (e.note || e.tolerance === '疲累' || e.tolerance === '不適停止')).sort(byDate('date')).reverse().slice(0, 30);
+  return `<section class="card"><h2>近4週執行狀況 <small>執行率 ${st.rate ?? '—'}%｜完成 ${st.done}｜部分 ${st.partial}｜未執行 ${st.skipped}｜未記錄 ${st.missing}</small></h2>
+    ${items.length ? `<div class="tbl-wrap"><table class="grid-t"><thead><tr><th class="sticky">項目</th>${days.map(d => `<th class="${[6, 7].includes(weekday(d)) ? 'we' : ''}">${d.slice(8)}<br><small>${WEEKDAYS[weekday(d)]}</small></th>`).join('')}<th>執行率</th></tr></thead><tbody>${grid}</tbody></table></div>
+    <p class="legend"><span class="g g-ok">✓</span>完成 <span class="g g-part">△</span>部分 <span class="g g-skip">✕</span>未執行 <span class="g g-miss">·</span>應執行未記錄</p>` : empty('目前沒有生效處方')}</section>
+  <section class="card"><h2>照服員觀察紀錄</h2>${notes.length ? `<ul class="feed">${notes.map(e => `<li><time>${rocDate(e.date)}</time><b>${esc(e.itemName || '')}</b> ${e.tolerance ? badge(e.tolerance, e.tolerance === '不適停止' ? 'red' : e.tolerance === '疲累' ? 'amber' : '') : ''} ${e.assist ? badge(e.assist) : ''}<p>${esc(e.note || '')}</p><small>${esc(staffName(e.staffId || e.updatedBy))}</small></li>`).join('')}</ul>` : empty('尚無觀察紀錄')}</section>`;
+}
+
+function clientOutcome(c){
+  const as = Logic.assessmentsOf(c.id);
+  const pts = f => as.map(a => ({ x:a.date, y:f(a) }));
+  const charts = [
+    ['巴氏量表 ADL（0–100）', pts(a => scoreBarthel(a)?.partial ? null : scoreBarthel(a)?.total), { min:0, max:100 }],
+    ['IADL（0–8）', pts(a => scoreIADL(a)?.total), { min:0, max:8 }],
+    ['TUG 起身行走（秒，越低越好）', pts(a => a.phy?.tug), { cut:PHY_CUT.tug, cutLabel:'跌倒風險 13.5秒' }],
+    ['30秒坐站（次）', pts(a => a.phy?.cs30), { min:0, cut:ageAt(c.birth) ? cs30Cut(ageAt(c.birth), c.gender) : null, cutLabel:'同齡平均下限' }],
+    ['握力（公斤）', pts(a => a.phy?.grip), { min:0, cut:c.gender === '男' ? PHY_CUT.gripM : PHY_CUT.gripF, cutLabel:'AWGS 切點' }],
+    ['步行速度（公尺/秒）', pts(a => gaitSpeed(a)), { min:0, cut:PHY_CUT.gait, cutLabel:'1.0 m/s' }],
+  ];
+  const reviews = as.flatMap(a => (a.goalReview || []).map(g => ({ ...g, date:a.date })));
+  const copm = as.filter(a => (a.copm || []).some(x => x.activity));
+  return `<div class="charts">${charts.map(([t, p, o]) => `<section class="card"><h3>${t}</h3>${lineChart(p, { ...o, title:t })}</section>`).join('')}</div>
+  <section class="card"><h2>短期目標達成（GAS）</h2>${reviews.length ? `<table class="tbl"><thead><tr><th>再評日期</th><th>目標</th><th>現值</th><th>GAS</th><th>說明</th></tr></thead><tbody>${reviews.map(g => `<tr><td>${rocDate(g.date)}</td><td>${esc(g.text)}</td><td>${esc(g.current || '')}</td><td>${badge((GAS.find(x => x[0] === +g.gas) || ['', '—'])[1], +g.gas >= 0 ? 'green' : 'amber')}</td><td>${esc(g.note || '')}</td></tr>`).join('')}</tbody></table>` : empty('再評估時評定目標達成度後會顯示於此')}</section>
+  <section class="card"><h2>個案有意義活動（自評表現/滿意度 1–10）</h2>${copm.length ? `<table class="tbl"><thead><tr><th>評估日期</th><th>活動</th><th>重要性</th><th>表現</th><th>滿意度</th></tr></thead><tbody>${copm.flatMap(a => a.copm.filter(x => x.activity).map(x => `<tr><td>${rocDate(a.date)}</td><td>${esc(x.activity)}</td><td>${x.imp ?? ''}</td><td>${x.perf ?? ''}</td><td>${x.sat ?? ''}</td></tr>`)).join('')}</tbody></table><p class="hint">表現或滿意度提升 ≥2 分具臨床意義。</p>` : empty('尚無資料')}</section>`;
+}
+
+function clientContacts(c){
+  const list = Store.all('contacts').filter(x => x.clientId === c.id).sort(byDate('date')).reverse();
+  return `<div class="toolbar">${btn('新增聯繫紀錄', `editContact(null,'${c.id}')`, { k:'primary', i:'plus' })}</div>
+  <section class="card">${list.length ? `<ul class="feed">${list.map(x => `<li><time>${rocDate(x.date)}</time>${badge(x.method)} <b>${esc(x.person || '')}</b><p>${esc(x.content || '')}</p><small>${esc(staffName(x.staffId))}</small> <a href="javascript:editContact('${x.id}')">編輯</a></li>`).join('')}</ul>` : empty('尚無聯繫紀錄。評鑑 B8 要求與照顧者主動聯繫並留有紀錄（聯絡本、電話、LINE、座談會等）。')}</section>`;
+}
+function editContact(id, cid){
+  S.edit = id ? clone(Store.get('contacts', id)) : { clientId:cid, date:todayISO(), method:'電話', staffId:App.currentUserId() };
+  openModal(id ? '編輯聯繫紀錄' : '新增家屬聯繫紀錄', `<div class="form-grid">
+    ${F.field('日期', F.date('date'), { req:true })}${F.field('方式', F.select('method', ['電話', 'LINE/通訊軟體', '聯絡簿', '面談', '家訪', '家屬座談會', '其他'], { blank:false }))}
+    ${F.field('聯繫對象', F.input('person', { ph:'例：女兒 王小姐' }))}${F.field('紀錄人', F.select('staffId', staffOpts()))}
+    ${F.field('內容（含復能處方說明、居家延續建議、家屬回饋）', F.text('content', { rows:4 }), { cls:'span2' })}</div>`,
+    { wide:true, extra:id ? btn('刪除', `if(askConfirm('確定刪除？')){Store.remove('contacts','${id}');closeModal(true);route()}`, { k:'danger' }) : '', onSave:() => { Store.upsert('contacts', S.edit); S.dirty = false; toast('已儲存'); route(); }, restore:() => { S.dirty = false; } });
+}
+function clientIncidents(c){
+  const list = Store.all('incidents').filter(x => x.clientId === c.id).sort(byDate('datetime')).reverse();
+  return `<div class="toolbar"><a class="btn primary" href="#/incident/new?client=${c.id}">${icon('plus', 16)}登錄意外事件</a></div>
+  <section class="card">${list.length ? incidentTable(list) : empty('無意外事件紀錄')}</section>`;
+}
+
+/* ---- pages-edit.js ---- */
+/* ================================================================
+   編輯頁：評估（初評/再評）與復能處方（開立/修正）
+   ================================================================ */
+const allExercises = () => [...EXERCISES, ...Store.all('library')];
+const findEx = id => allExercises().find(e => e.id === id);
+const isPrescriber = id => PRESCRIBER_ROLES.includes(staffRole(id));
+
+/* ---------------- 評估 ---------------- */
+function newAssessment(cid, type){
+  const prev = Logic.lastAssessment(cid), plan = Logic.activePlan(cid);
+  type = type || (prev ? '再評' : '初評');
+  const a = { clientId:cid, date:todayISO(), type, assessorId:App.currentUserId(),
+    adl:{}, iadl:{}, spmsq:{ items:Array(10).fill(''), edu:prev?.spmsq?.edu || '' }, gds:Array(15).fill(''), mna:{}, pain:{},
+    phy:{ height:prev?.phy?.height || '' },
+    physio:prev?.physio || '', psycho:prev?.psycho || '', social:prev?.social || '', lifeEvents:prev?.lifeEvents || '', expect:prev?.expect || '',
+    copm:prev?.copm?.length ? prev.copm.filter(x => x.activity).map(x => ({ activity:x.activity, imp:x.imp, perf:'', sat:'' })) : [{}, {}, {}],
+    problemSel:{}, customProblems:'', summary:'', carried:!!prev };
+  if (plan && type !== '初評') a.goalReview = (plan.goals || []).map(g => ({ goalId:g.id, planId:plan.id, text:g.text, measure:g.measure, baseline:g.baseline, target:g.target, current:'', gas:'', note:'' }));
+  return a;
+}
+function pageAssessEdit(id, cid, type){
+  const a = id ? clone(Store.get('assessments', id) || {}) : newAssessment(cid, type);
+  if (!a.clientId) { App.go('#/clients'); return ''; }
+  const c = Store.get('clients', a.clientId);
+  if (!c) { App.go('#/clients'); return ''; }
+  S.edit = a;
+  const prev = Logic.assessmentsOf(a.clientId).filter(x => x.id !== a.id && x.date <= a.date).at(-1) || null;
+  setTitle((id ? '' : '新增') + (a.type || '') + '評估', c.name);
+  S.onEdit = p => { liveSummary(c); if (/^(adl|iadl|phy|spmsq|gds|mna|pain|copm)/.test(p)) { clearTimeout(S._sg); S._sg = setTimeout(() => { const el = $('#sugg'); if (el) el.innerHTML = suggestionsHTML(c); }, 250); } };
+  setTimeout(() => liveSummary(c), 0);
+  const pv = (v) => prev ? `<span class="prev">前次：${v ?? '—'}</span>` : '';
+  const sec = (k, t, body, note = '') => `<section class="card" id="s-${k}"><h2>${t}${note ? ` <small>${note}</small>` : ''}</h2>${body}</section>`;
+
+  const adl = BARTHEL.map(it => `<div class="q"><div class="qh"><b>${it.n}</b>${pv(prev?.adl?.[it.k])}</div>${F.radios('adl.' + it.k, it.opts.map(([s, d]) => [s, `${s} 分｜${d}`]), { t:'num', cls:'vert' })}</div>`).join('');
+  const iadl = IADL.map(it => `<div class="q"><div class="qh"><b>${it.n}</b>${pv(prev?.iadl?.[it.k] != null && prev.iadl[it.k] !== '' ? it.opts[prev.iadl[it.k]][0] : null)}</div>${F.radios('iadl.' + it.k, it.opts.map(([d, s], i) => [i, `${d}（${s}）`]), { t:'num', cls:'vert' })}</div>`).join('');
+  const spm = `${F.field('教育程度', F.radios('spmsq.edu', EDU_OPTS))}<table class="tbl qa"><tbody>${SPMSQ.map((q, i) => `<tr><td>${i + 1}. ${q}</td><td>${F.radios('spmsq.items.' + i, [['c', '正確'], ['x', '錯誤']])}</td></tr>`).join('')}</tbody></table>`;
+  const phyRow = (k, label, unit, hint) => F.field(label + (unit ? `（${unit}）` : ''), F.num('phy.' + k, { min:0 }) + pv(prev?.phy?.[k]), { hint });
+  const phy = `<div class="form-grid g3">
+    ${phyRow('height', '身高', '公分')}${phyRow('weight', '體重', '公斤')}
+    ${F.field('BMI', `<div class="calc" id="bmi">—</div>`)}
+    ${phyRow('tug', 'TUG 起身行走', '秒', '≥13.5 秒為跌倒高風險')}
+    ${F.field('TUG 使用輔具', F.input('phy.tugAid', { ph:'例：四腳拐' }))}
+    ${phyRow('oneLeg', '單腳站立', '秒', '<5 秒為跌倒風險')}
+    ${phyRow('cs30', '30秒坐站', '次', c.birth ? `同齡平均下限：${cs30Cut(ageAt(c.birth, a.date), c.gender)} 次` : '請填寫出生日期以比對常模')}
+    ${phyRow('cs5', '5次坐站', '秒', '≥12 秒表示下肢功能下降（AWGS）')}
+    ${phyRow('grip', '握力（慣用手最佳值）', '公斤', `AWGS 切點：男 <28、女 <18`)}
+    ${phyRow('gait4', '4公尺步行時間', '秒', '系統自動換算步速；<1.0 m/s 為慢')}
+    ${F.field('步行速度', `<div class="calc" id="gait">—</div>`)}
+    ${F.field('無法施測說明', F.input('phy.note', { ph:'例：無法站立，未施測 TUG' }))}
+  </div>`;
+  const gds = `<p class="hint">中、重度失智者可不施測。依長輩「過去一週」的感受回答。</p><table class="tbl qa"><tbody>${GDS15.map(([q], i) => `<tr><td>${i + 1}. ${q}</td><td>${F.radios('gds.' + i, [['y', '是'], ['n', '否']])}</td></tr>`).join('')}</tbody></table>`;
+  const mna = MNASF.map(it => `<div class="q"><div class="qh"><b>${it.k}. ${it.n}</b></div>${F.radios('mna.' + it.k, it.opts.map(([s, d]) => [s, `${d}（${s}）`]), { t:'num' })}</div>`).join('') +
+    `<div class="q"><div class="qh"><b>F. BMI 或小腿圍</b></div><p class="hint">已填身高體重會自動以 BMI 計分；無法量體重時填小腿圍。</p>${F.field('小腿圍（公分）', F.num('mna.calf'))}</div>`;
+  const pain = `<div class="form-grid">${F.field('疼痛程度 NRS（0 不痛～10 最痛）', F.radios('pain.nrs', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [n, String(n)]), { t:'num' }), { cls:'span2' })}${F.field('疼痛部位/影響', F.input('pain.site'), { cls:'span2' })}</div>`;
+  const psy = `${a.carried && !id ? '<div class="notice">已帶入前次內容，請依現況更新。</div>' : ''}<div class="form-grid">
+    ${F.field('生理狀況', F.text('physio', { ph:'疾病、用藥、視力聽力、睡眠、排泄、皮膚、吞嚥…' }), { cls:'span2' })}
+    ${F.field('心理、認知與情緒', F.text('psycho', { ph:'情緒狀態、認知表現、行為問題、適應情形…' }), { cls:'span2', req:true, hint:'B1 需求評估必備' })}
+    ${F.field('家庭及社會支持', F.text('social', { ph:'同住者、主要照顧者負荷、經濟、社區資源、社交參與…' }), { cls:'span2', req:true, hint:'B1 需求評估必備' })}
+    ${F.field('重大生命事件', F.text('lifeEvents', { rows:2, ph:'近一年喪偶、搬遷、住院、跌倒…；若無請填「無」' }), { cls:'span2', req:true, hint:'B1 需求評估必備' })}
+    ${F.field('個案與家屬對服務的期待', F.text('expect', { rows:2 }), { cls:'span2' })}</div>`;
+  const copm = `<p class="hint">請長輩說出「最想再做到的日常活動」，以 1–10 分自評重要性、目前表現、滿意度（參考 COPM）。這是處方目標的核心。</p>
+    <table class="tbl"><thead><tr><th>想做到的活動</th><th>重要性</th><th>表現</th><th>滿意度</th><th></th></tr></thead><tbody>${(a.copm || []).map((x, i) => `<tr><td>${F.input(`copm.${i}.activity`, { ph:'例：自己走去市場買菜' })}</td><td>${F.num(`copm.${i}.imp`, { min:1, max:10 })}</td><td>${F.num(`copm.${i}.perf`, { min:1, max:10 })}</td><td>${F.num(`copm.${i}.sat`, { min:1, max:10 })}</td><td>${btn('✕', `S.edit.copm.splice(${i},1);rerender(()=>pageAssessBody())`, { k:'sm ghost', title:'刪除' })}</td></tr>`).join('')}</tbody></table>
+    ${btn('新增活動', 'S.edit.copm.push({});rerender(()=>pageAssessBody())', { k:'sm', i:'plus' })}`;
+  const gr = (a.goalReview || []).length ? sec('gr', '前次處方目標達成評值', `<table class="tbl"><thead><tr><th>短期目標</th><th>基準 → 目標</th><th>本次現值</th><th>GAS 達成度</th><th>說明</th></tr></thead><tbody>${a.goalReview.map((g, i) => `<tr><td>${esc(g.text)}<br><small class="muted">${esc(g.measure || '')}</small></td><td>${esc(g.baseline || '')} → ${esc(g.target || '')}</td><td>${F.input(`goalReview.${i}.current`)}</td><td>${F.select(`goalReview.${i}.gas`, GAS.map(([v, l]) => [v, l]), { t:'num' })}</td><td>${F.input(`goalReview.${i}.note`)}</td></tr>`).join('')}</tbody></table>`, '再評估時必填，作為修正處方依據') : '';
+
+  const nav = [['basic', '基本'], ['adl', 'ADL'], ['iadl', 'IADL'], ['cog', '認知'], ['phy', '體能'], ['gds', '情緒'], ['mna', '營養'], ['pain', '疼痛'], ['psy', '身心社會'], ['copm', '有意義活動'], ...(gr ? [['gr', '目標評值']] : []), ['sum', '問題與摘要']];
+  S._assessBody = () => `
+  <div class="toolbar sticky-bar">
+    <a class="btn" href="#/client/${c.id}/assess">${icon('back', 16)}${esc(c.name)}</a>
+    <div class="jump">${nav.map(([k, l]) => `<a href="javascript:document.getElementById('s-${k}').scrollIntoView({behavior:'smooth'})">${l}</a>`).join('')}</div>
+    <span class="sp"></span>
+    ${id ? btn('刪除', `deleteAssessment('${id}')`, { k:'danger ghost', i:'trash' }) : ''}
+    ${btn('儲存', 'saveAssessment(false)', { k:'' })}${btn(Logic.activePlan(c.id) ? '儲存並修正處方' : '儲存並開立處方', 'saveAssessment(true)', { k:'primary', i:'rx' })}
+  </div>
+  <div class="edit-layout"><div class="edit-main">
+    ${sec('basic', '基本資料', `<div class="form-grid g3">${F.field('評估日期', F.date('date'), { req:true })}${F.field('評估類別', F.select('type', ['初評', '再評', '結案評估', '不定期評估'], { blank:false }))}${F.field('評估人員', F.select('assessorId', staffOpts()), { req:true })}</div>`)}
+    ${sec('adl', '日常生活活動 ADL｜巴氏量表', adl)}
+    ${sec('iadl', '工具性日常生活 IADL｜Lawton', iadl, '括號內為計分')}
+    ${sec('cog', '認知｜簡易心智狀態問卷 SPMSQ', spm)}
+    ${sec('phy', '體能與跌倒風險', phy)}
+    ${sec('gds', '情緒｜老人憂鬱量表 GDS-15', gds, '≥5 分疑似憂鬱')}
+    ${sec('mna', '營養｜迷你營養評估簡表 MNA-SF', mna)}
+    ${sec('pain', '疼痛', pain)}
+    ${sec('psy', '身心社會需求評估', psy, '評鑑 B1：生理、心理認知、家庭社會支持、重大生命事件')}
+    ${sec('copm', '個案有意義活動目標', copm)}
+    ${gr}
+    ${sec('sum', '問題確立與評估摘要', `<p class="hint">系統依評估結果建議下列問題，勾選後會帶入處方，並附上建議處方項目與轉介。</p><div id="sugg">${suggestionsHTML(c)}</div>
+      ${F.field('其他問題（每行一項）', F.text('customProblems', { rows:3 }))}${F.field('評估摘要', F.text('summary', { rows:3, ph:'整體功能、優勢、限制與建議' }))}`)}
+  </div><aside class="edit-side"><div class="card sticky" id="live"></div></aside></div>`;
+  return S._assessBody();
+}
+function pageAssessBody(){ const h = S._assessBody(); setTimeout(() => liveSummary(Store.get('clients', S.edit.clientId)), 0); return h; }
+function suggestionsHTML(c){
+  const sg = suggestFromAssessment(S.edit, c);
+  if (!sg.length) return '<p class="muted">（填寫量表後顯示建議問題）</p>';
+  S.edit.problemSel ||= {}; sg.forEach(s => { if (!(s.code in S.edit.problemSel)) S.edit.problemSel[s.code] = true; });
+  return `<ul class="sugg">${sg.map(s => `<li>${F.check('problemSel.' + s.code, `<b>${esc(s.text)}</b>${s.ex.length ? `<small>建議處方：${s.ex.map(e => esc(findEx(e)?.name || e)).join('、')}</small>` : ''}${s.referral ? `<small class="ref">建議轉介：${esc(s.referral)}</small>` : ''}`)}</li>`).join('')}</ul>`;
+}
+function liveSummary(c){
+  const a = S.edit, el = $('#live'); if (!el || !a) return;
+  const b = scoreBarthel(a), i = scoreIADL(a), s = scoreSPMSQ(a), g = scoreGDS(a), m = scoreMNA(a), bmi = calcBMI(a), gs = gaitSpeed(a), p = a.phy || {};
+  const ag = ageAt(c.birth, a.date);
+  const row = (k, v, flag) => `<div class="ls ${flag ? 'flag' : ''}"><span>${k}</span><b>${v}</b></div>`;
+  el.innerHTML = `<h3>即時計分</h3>
+    ${row('巴氏 ADL', b ? `${b.total}　<small>${b.level}</small>` : '—', b && !b.partial && b.total < 91)}
+    ${row('IADL', i ? `${i.total}/8${i.partial ? '<small>（未完成）</small>' : ''}` : '—')}
+    ${row('SPMSQ', s ? (s.partial ? `錯 ${s.errors}<small>（未完成）</small>` : `錯 ${s.errors}　<small>${spmsqLevel(s.adj)}</small>`) : '—', s && s.adj >= 3)}
+    ${row('TUG', p.tug ? p.tug + ' 秒' : '—', +p.tug >= PHY_CUT.tug)}
+    ${row('30秒坐站', p.cs30 !== '' && p.cs30 != null ? p.cs30 + ' 次' + (ag ? ` <small>/${cs30Cut(ag, c.gender)}</small>` : '') : '—', ag && p.cs30 !== '' && p.cs30 != null && +p.cs30 < cs30Cut(ag, c.gender))}
+    ${row('握力', p.grip ? p.grip + ' kg' : '—', p.grip && +p.grip < (c.gender === '男' ? PHY_CUT.gripM : PHY_CUT.gripF))}
+    ${row('步速', gs != null ? gs + ' m/s' : '—', gs != null && gs < PHY_CUT.gait)}
+    ${row('BMI', bmi ?? '—', bmi != null && (bmi < 18.5 || bmi >= 27))}
+    ${row('GDS-15', g ? g.total + (g.partial ? '<small>（未完成）</small>' : '') : '—', g && !g.partial && g.total >= 5)}
+    ${row('MNA-SF', m ? `${m.total}　<small>${mnaLevel(m.total)}</small>` : '—', m && m.total <= 11)}
+    ${row('疼痛 NRS', a.pain?.nrs ?? '—', +a.pain?.nrs >= 4)}
+    <p class="hint">紅色＝需注意。系統建議為參考，最終判斷由專業人員決定。</p>`;
+  const bm = $('#bmi'); if (bm) bm.textContent = bmi ?? '—';
+  const ga = $('#gait'); if (ga) ga.textContent = gs != null ? gs + ' m/s' : '—';
+}
+function saveAssessment(toPlan){
+  const a = S.edit, c = Store.get('clients', a.clientId);
+  if (!a.date) return toast('請填寫評估日期', 'err');
+  if (!a.assessorId) return toast('請選擇評估人員', 'err');
+  const miss = [];
+  if (!scoreBarthel(a) || scoreBarthel(a).partial) miss.push('巴氏量表未完成');
+  if (!a.social?.trim()) miss.push('家庭及社會支持');
+  if (!a.lifeEvents?.trim()) miss.push('重大生命事件');
+  if (!a.psycho?.trim() && !scoreSPMSQ(a) && !scoreGDS(a)) miss.push('心理認知');
+  if ((a.goalReview || []).some(g => g.gas === '' || g.gas == null)) miss.push('前次目標 GAS 達成度');
+  if (miss.length && !askConfirm('以下評鑑必要內容尚未完成：\n・' + miss.join('\n・') + '\n\n仍要儲存嗎？')) return;
+  const sg = suggestFromAssessment(a, c);
+  a.problems = [...sg.filter(s => a.problemSel?.[s.code]), ...(a.customProblems || '').split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ code:'custom', text:t, ex:[], referral:'' }))];
+  delete a.carried;
+  const saved = Store.upsert('assessments', a); S.dirty = false;
+  toast('評估已儲存');
+  const plan = Logic.activePlan(a.clientId);
+  if (toPlan) App.go(`#/plan/new/${a.clientId}?from=${saved.id}${plan ? '&revise=' + plan.id : ''}`);
+  else App.go(`#/client/${a.clientId}/assess`);
+}
+function deleteAssessment(id){ if (!askConfirm('確定刪除此評估紀錄？')) return; const a = Store.get('assessments', id); Store.remove('assessments', id); S.dirty = false; toast('已刪除'); App.go('#/client/' + a.clientId + '/assess'); }
+
+/* ---------------- 復能處方 ---------------- */
+function newPlan(cid, params){
+  const from = params.get('from') ? Store.get('assessments', params.get('from')) : null;
+  const base = params.get('revise') ? Store.get('plans', params.get('revise')) : null;
+  const ver = Math.max(0, ...Logic.plansOf(cid).map(p => p.version || 0)) + 1;
+  const uid = App.currentUserId();
+  const p = { clientId:cid, assessmentId:from?.id || base?.assessmentId || '', version:ver, revisedFrom:base?.id || '', status:'草稿',
+    startDate:todayISO(), reviewDate:addDays(todayISO(), DEFAULT_CYCLE_DAYS), prescriberId:isPrescriber(uid) ? uid : '',
+    problems:from ? (from.problems || []).map(x => x.text) : base ? [...(base.problems || [])] : [],
+    longGoal:base?.longGoal || '', goals:base ? clone(base.goals || []) : [], items:base ? clone(base.items || []) : [],
+    referrals:base ? clone(base.referrals || []) : [], changeReason:'', consent:{ date:todayISO() }, note:'' };
+  if (from) for (const pr of (from.problems || [])) if (pr.referral && !p.referrals.some(r => r.to === pr.referral)) p.referrals.push({ to:pr.referral, reason:pr.text, date:todayISO(), result:'' });
+  // 依目標評值結果自動提示
+  if (base && from?.goalReview?.length) p.changeReason = from.goalReview.map(g => `「${g.text}」GAS ${g.gas === '' ? '?' : g.gas}${g.note ? '（' + g.note + '）' : ''}`).join('；') + '。';
+  if (!p.goals.length) p.goals.push({ id:Store.newId(), text:'', measure:'', baseline:'', target:'', due:p.reviewDate });
+  p._suggest = from ? [...new Set((from.problems || []).flatMap(x => x.ex || []))] : [];
+  return p;
+}
+function pagePlanEdit(id, cid, params){
+  const p = id ? clone(Store.get('plans', id) || {}) : newPlan(cid, params);
+  if (!p.clientId) { App.go('#/clients'); return ''; }
+  const c = Store.get('clients', p.clientId);
+  if (!c) { App.go('#/clients'); return ''; }
+  if (id && p.status !== '執行中' && p.status !== '草稿') { setTitle('復能處方 v' + p.version, c.name); return `<div class="toolbar"><a class="btn" href="#/client/${c.id}/plan">${icon('back', 16)}${esc(c.name)}</a><span class="sp"></span>${btn('列印處方箋', `printPlan('${p.id}')`, { i:'print' })}</div><div class="notice">此版本狀態為「${esc(p.status)}」，僅供檢視。如需變更請於生效中的處方建立修正版本。</div><section class="card">${planSummary(p)}</section>`; }
+  S.edit = p;
+  setTitle((id ? '編輯' : p.revisedFrom ? '修正' : '開立') + '復能處方 v' + p.version, c.name);
+  S.onEdit = (path) => { if (/^goals\.\d+\.text$/.test(path)) { clearTimeout(S._gt); S._gt = setTimeout(refreshGoalSelects, 400); } };
+  return planEditorHTML();
+}
+function refreshGoalSelects(){ document.querySelectorAll('select[data-goalsel]').forEach(sel => { const i = +sel.dataset.goalsel, cur = S.edit.items[i]?.goalId || ''; sel.innerHTML = `<option value="">—</option>` + S.edit.goals.map((g, gi) => `<option value="${g.id}" ${g.id === cur ? 'selected' : ''}>目標${gi + 1}：${esc((g.text || '').slice(0, 18))}</option>`).join(''); }); }
+function planEditorHTML(){
+  const p = S.edit, c = Store.get('clients', p.clientId), a = p.assessmentId ? Store.get('assessments', p.assessmentId) : null;
+  const sug = (p._suggest || []).filter(eid => !p.items.some(it => it.exId === eid));
+  const aSum = a ? [['巴氏', scoreBarthel(a)?.total], ['IADL', scoreIADL(a)?.total], ['SPMSQ錯', scoreSPMSQ(a)?.errors], ['TUG', a.phy?.tug], ['30秒坐站', a.phy?.cs30], ['握力', a.phy?.grip], ['步速', gaitSpeed(a)], ['GDS', scoreGDS(a)?.total], ['MNA', scoreMNA(a)?.total]].filter(x => x[1] != null && x[1] !== '') : [];
+  const lib = EX_CATS.map(cat => `<details><summary>${cat}</summary><div class="lib">${allExercises().filter(e => e.cat === cat).map(e => `<button type="button" class="chip" onclick="addPlanItem('${e.id}')" title="${esc(e.how)}">${icon('plus', 14)}${esc(e.name)}</button>`).join('')}</div></details>`).join('');
+  return `
+  <div class="toolbar sticky-bar">
+    <a class="btn" href="#/client/${c.id}/plan">${icon('back', 16)}${esc(c.name)}</a><span class="sp"></span>
+    ${p.id && p.status === '執行中' ? btn('結案此處方', 'closePlan()', { k:'danger ghost' }) : ''}
+    ${btn(p.id ? '儲存' : '儲存並生效', 'savePlan()', { k:'primary', i:'check' })}
+  </div>
+  ${p.id ? '<div class="notice">直接編輯會覆蓋此版本。若處方內容有實質變更（目標、項目、劑量），建議使用「修正處方」建立新版本，以保留評鑑所需的修正歷程。</div>' : ''}
+  <section class="card"><h2>處方資訊</h2>
+    ${a ? `<div class="notice">依據 ${rocDate(a.date)} ${esc(a.type)}評估（${esc(staffName(a.assessorId))}）：${aSum.map(([k, v]) => `${k} <b>${v}</b>`).join('　')}</div>` : '<div class="notice warn">此處方未連結評估。評鑑 B1 要求「依評估結果確立問題及服務計畫」，建議先完成評估。</div>'}
+    <div class="form-grid g3">
+      ${F.field('生效日期', F.date('startDate'), { req:true })}${F.field('預定再評估日', F.date('reviewDate'), { req:true, hint:'復能週期建議 8–12 週；最遲不得超過上次評估後6個月' })}${F.field('開立人員', F.select('prescriberId', staffOpts(s => PRESCRIBER_ROLES.includes(s.role))), { req:true })}
+    </div>
+    ${p.version > 1 ? F.field('修正理由（必填）', F.text('changeReason', { rows:2, ph:'例：坐站目標已達成，提高劑量；新增步行訓練…' }), { req:true }) : ''}
+  </section>
+  <section class="card"><h2>問題確立</h2>
+    ${p.problems.map((x, i) => `<div class="row-edit">${F.input('problems.' + i)}${btn('✕', `S.edit.problems.splice(${i},1);rerender(planEditorHTML)`, { k:'sm ghost' })}</div>`).join('')}
+    ${btn('新增問題', `S.edit.problems.push('');rerender(planEditorHTML)`, { k:'sm', i:'plus' })}
+  </section>
+  <section class="card"><h2>復能目標</h2>
+    ${F.field('長期目標（3–6個月）', F.text('longGoal', { rows:2, ph:'以長輩想做到的生活活動來描述，例：能自己拿四腳拐走到社區市場買菜' }))}
+    <h3>短期目標（具體、可量測、有期限）</h3>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>短期目標</th><th>評量方式</th><th>基準值</th><th>目標值</th><th>預計達成日</th><th></th></tr></thead><tbody>
+    ${p.goals.map((g, i) => `<tr><td>${i + 1}</td><td>${F.input(`goals.${i}.text`, { ph:'例：可在監督下獨立完成輪椅↔椅子移位' })}</td><td>${F.input(`goals.${i}.measure`, { ph:'例：30秒坐站' })}</td><td>${F.input(`goals.${i}.baseline`, { cls:'w6' })}</td><td>${F.input(`goals.${i}.target`, { cls:'w6' })}</td><td>${F.date(`goals.${i}.due`)}</td><td>${btn('✕', `S.edit.goals.splice(${i},1);rerender(planEditorHTML)`, { k:'sm ghost' })}</td></tr>`).join('')}
+    </tbody></table></div>${btn('新增短期目標', `S.edit.goals.push({id:Store.newId(),due:S.edit.reviewDate});rerender(planEditorHTML)`, { k:'sm', i:'plus' })}
+  </section>
+  <section class="card"><h2>處方項目 <small>照服員每日依此執行並記錄</small></h2>
+    ${sug.length ? `<div class="notice">評估建議項目：${sug.map(eid => `<button type="button" class="chip hl" onclick="addPlanItem('${eid}')">${icon('plus', 14)}${esc(findEx(eid)?.name || eid)}</button>`).join('')} <button type="button" class="chip" onclick="sugAll()">全部加入</button></div>` : ''}
+    <div class="items-edit">${p.items.map((it, i) => `<div class="item-card">
+      <div class="ic-h"><b>${i + 1}.</b>${F.input(`items.${i}.name`, { cls:'grow' })}${F.select(`items.${i}.cat`, EX_CATS, { blank:false })}${btn('✕', `S.edit.items.splice(${i},1);rerender(planEditorHTML)`, { k:'sm ghost', title:'移除' })}</div>
+      <div class="form-grid g3">
+        ${F.field('劑量', F.input(`items.${i}.dose`))}
+        ${F.field('對應目標', `<select class="inp" data-bind="items.${i}.goalId" data-goalsel="${i}"><option value="">—</option>${p.goals.map((g, gi) => `<option value="${g.id}" ${g.id === it.goalId ? 'selected' : ''}>目標${gi + 1}：${esc((g.text || '').slice(0, 18))}</option>`).join('')}</select>`)}
+        ${F.field('目標協助程度', F.select(`items.${i}.assist`, ASSIST_LEVELS))}
+        ${F.field('執行日', `<div class="pills">${[1, 2, 3, 4, 5, 6].map(w => F.checkArr(`items.${i}.days`, w, WEEKDAYS[w], true)).join('')}</div>`, { cls:'span2' })}
+        ${F.field('自立支援', F.check(`items.${i}.selfcare`, '屬自我照顧能力訓練（B10）'))}
+        ${F.field('照服員執行說明', F.text(`items.${i}.how`, { rows:2 }), { cls:'span2' })}
+        ${F.field('注意事項／停止條件', F.text(`items.${i}.caution`, { rows:2 }))}
+      </div></div>`).join('') || '<p class="muted">尚未加入處方項目，請從下方處方庫選擇或新增自訂項目。</p>'}</div>
+    <h3>處方庫</h3><div class="libs">${lib}</div>${btn('新增自訂項目', 'addPlanItem()', { k:'sm', i:'plus' })}
+  </section>
+  <section class="card"><h2>轉介（B1-5）</h2>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>轉介對象</th><th>原因</th><th>轉介日期</th><th>結果/回覆</th><th></th></tr></thead><tbody>
+    ${p.referrals.map((r, i) => `<tr><td>${F.input(`referrals.${i}.to`, { list:'ref-list' })}</td><td>${F.input(`referrals.${i}.reason`)}</td><td>${F.date(`referrals.${i}.date`)}</td><td>${F.input(`referrals.${i}.result`)}</td><td>${btn('✕', `S.edit.referrals.splice(${i},1);rerender(planEditorHTML)`, { k:'sm ghost' })}</td></tr>`).join('')}
+    </tbody></table></div><datalist id="ref-list">${['營養師', '語言治療師', '社工', '護理師', '物理治療師', '職能治療師', '神經內科', '精神科/身心科', '復健科', '家醫科', '牙科', '輔具資源中心', '居家無障礙改善（CC01）'].map(x => `<option value="${x}">`).join('')}</datalist>
+    ${btn('新增轉介', `S.edit.referrals.push({date:todayISO()});rerender(planEditorHTML)`, { k:'sm', i:'plus' })}
+  </section>
+  <section class="card"><h2>個案／家屬說明與同意</h2><div class="form-grid g3">
+    ${F.field('已向個案/家屬說明處方內容', F.check('consent.explained', '已說明並取得同意'))}${F.field('說明對象', F.input('consent.by', { ph:'例：個案本人、女兒' }))}${F.field('日期', F.date('consent.date'))}
+    ${F.field('居家延續建議（給家屬）', F.text('note', { rows:2, ph:'例：在家每天飯後做坐站10下，家屬在旁陪同' }), { cls:'span3' })}</div>
+  </section>`;
+}
+function addPlanItem(exId){
+  const e = exId ? findEx(exId) : null;
+  S.edit.items.push({ id:Store.newId(), exId:exId || '', name:e?.name || '', cat:e?.cat || '肌力', dose:e?.dose || '', days:[1, 2, 3, 4, 5].filter(w => (Store.get('clients', S.edit.clientId).attendDays || [1, 2, 3, 4, 5]).includes(w)), assist:'', how:e?.how || '', caution:e?.caution || '', selfcare:!!e?.selfcare, goalId:S.edit.goals[0]?.id || '' });
+  S.dirty = true; rerender(planEditorHTML); toast('已加入：' + (e?.name || '自訂項目'));
+}
+function sugAll(){ (S.edit._suggest || []).filter(eid => !S.edit.items.some(it => it.exId === eid)).forEach(eid => { const e = findEx(eid); if (e) S.edit.items.push({ id:Store.newId(), exId:eid, name:e.name, cat:e.cat, dose:e.dose, days:[1, 2, 3, 4, 5], assist:'', how:e.how, caution:e.caution, selfcare:!!e.selfcare, goalId:S.edit.goals[0]?.id || '' }); }); S.dirty = true; rerender(planEditorHTML); }
+function savePlan(){
+  const p = S.edit;
+  const err = [];
+  if (!p.prescriberId) err.push('請選擇開立人員');
+  if (!p.startDate || !p.reviewDate) err.push('請填寫生效日期與預定再評估日');
+  if (p.reviewDate <= p.startDate) err.push('再評估日需晚於生效日期');
+  p.goals = p.goals.filter(g => g.text?.trim()); p.problems = p.problems.filter(x => x?.trim()); p.referrals = p.referrals.filter(r => r.to?.trim());
+  if (!p.goals.length) err.push('至少需要一項短期目標');
+  if (!p.items.length) err.push('至少需要一項處方項目');
+  p.items.forEach((it, i) => { if (!it.name?.trim()) err.push(`第${i + 1}項處方未填名稱`); if (!(it.days || []).length) err.push(`「${it.name || i + 1}」未勾選執行日`); });
+  if (p.version > 1 && !p.id && !p.changeReason?.trim()) err.push('請填寫修正理由');
+  if (err.length) { if (!p.goals.length) p.goals.push({ id:Store.newId(), due:p.reviewDate }); rerender(planEditorHTML); return toast(err.join('；'), 'err'); }
+  const isNew = !p.id; delete p._suggest;
+  if (isNew) {
+    for (const old of Logic.plansOf(p.clientId).filter(x => x.status === '執行中')) { old.status = '已修正'; old.endDate = addDays(p.startDate, -1); old.supersededBy = 'pending'; Store.upsert('plans', old); }
+    p.status = '執行中';
+  }
+  const saved = Store.upsert('plans', p);
+  if (isNew) Logic.plansOf(p.clientId).filter(x => x.supersededBy === 'pending').forEach(x => { x.supersededBy = saved.id; Store.upsert('plans', x); });
+  S.dirty = false; toast(isNew ? `處方 v${saved.version} 已生效，照服員今日起可於「今日執行」看到` : '處方已更新');
+  App.go('#/client/' + p.clientId + '/plan');
+  if (isNew && askConfirm('是否列印處方箋（供個案/家屬簽名與照服員參考）？')) printPlan(saved.id);
+}
+function closePlan(){ if (!askConfirm('確定結案此處方？結案後照服員將不再看到此處方項目。')) return; const p = Store.get('plans', S.edit.id); p.status = '結案'; p.endDate = todayISO(); Store.upsert('plans', p); S.dirty = false; toast('處方已結案'); App.go('#/client/' + p.clientId + '/plan'); }
+
+/* ---- pages-other.js ---- */
+/* ================================================================
+   頁面：個案討論會、意外事件、活動與訓練、評鑑與成效、設定
+   ================================================================ */
+
+/* ---------------- 跨專業個案討論會（B1-6） ---------------- */
+function pageMeetings(){
+  setTitle('跨專業個案討論會', '每3個月至少1次，至少3種專業參與');
+  const ms = Logic.meetings().reverse(), lm = ms[0];
+  const od = Logic.openDecisions();
+  return `<div class="toolbar"><a class="btn primary" href="#/meeting/new">${icon('plus', 16)}新增會議紀錄</a><span class="sp"></span>
+    ${lm ? `<span class="muted">上次：${rocDate(lm.date)}｜下次最遲：<b>${rocDate(addMonths(lm.date, MEETING_MONTHS))}</b></span>` : ''}</div>
+  <section class="card"><h2>未完成決議 <small>${od.length} 項</small></h2>${od.length ? `<table class="tbl"><thead><tr><th>會議</th><th>個案</th><th>決議事項</th><th>負責人</th><th>期限</th><th>狀態</th></tr></thead><tbody>${od.map(d => `<tr><td>${rocDate(d.meetingDate)}</td><td>${esc(d.clientId ? clientName(d.clientId) : '—')}</td><td>${esc(d.text)}</td><td>${esc(staffName(d.owner))}</td><td>${rocDate(d.due)} ${d.due && d.due < todayISO() ? badge('逾期', 'red') : ''}</td><td>${badge(d.status || '待執行')}</td></tr>`).join('')}</tbody></table>` : empty('沒有未完成的決議')}</section>
+  <section class="card flush"><table class="tbl"><thead><tr><th>日期</th><th>類型</th><th>參與專業</th><th>討論個案</th><th>決議數</th><th></th></tr></thead><tbody>
+  ${ms.map(m => { const dis = Logic.meetingDisciplines(m); return `<tr class="click" onclick="App.go('#/meeting/${m.id}')"><td>${rocDate(m.date)}</td><td>${esc(m.type)}</td><td>${dis.length} 種 ${dis.length < 3 ? badge('未達3種', 'red') : ''}<br><small class="muted">${esc(dis.join('、'))}</small></td><td>${(m.cases || []).map(x => esc(clientName(x.clientId))).join('、')}</td><td>${(m.decisions || []).length}</td><td>${btn('列印', `event.stopPropagation();printMeeting('${m.id}')`, { k:'sm' })}</td></tr>`; }).join('') || `<tr><td colspan="6">${empty('尚無會議紀錄')}</td></tr>`}
+  </tbody></table></section>`;
+}
+function pageMeetingEdit(id){
+  let m;
+  if (id === 'new') {
+    m = { date:todayISO(), type:'定期跨專業個案討論會', hostId:App.currentUserId(), attendees:App.currentUserId() ? [App.currentUserId()] : [], external:[], cases:[], decisions:[], followups:[], content:'' };
+    m.followups = Logic.openDecisions().map(d => ({ meetingId:d.meetingId, decisionId:d.id, text:d.text, clientId:d.clientId, owner:d.owner, status:d.status || '待執行', note:'' }));
+    // 預設帶入需討論個案：再評逾期/即將到期、連續未執行、照服員警示
+    const want = new Set();
+    Store.all('clients').filter(c => c.status === '服務中').forEach(c => { const d = Logic.reassessDue(c.id); if (!d || diffDays(todayISO(), d.date) <= 30) want.add(c.id); });
+    Logic.repeatedSkips().forEach(s => want.add(s.client.id)); Logic.alerts().forEach(e => want.add(e.clientId));
+    m.cases = [...want].map(cid => ({ clientId:cid, discussion:'' }));
+  } else m = clone(Store.get('meetings', id) || {});
+  if (!m.date) { App.go('#/meetings'); return ''; }
+  S.edit = m; setTitle(id === 'new' ? '新增個案討論會紀錄' : '個案討論會 ' + rocDate(m.date));
+  S.onEdit = p => { if (p === 'attendees') { const el = $('#dis'); if (el) el.innerHTML = disHTML(); } };
+  return meetingHTML();
+}
+function disHTML(){ const d = Logic.meetingDisciplines(S.edit); return `參與專業 <b>${d.length}</b> 種：${esc(d.join('、') || '—')} ${d.length >= 3 ? badge('符合 ≥3 種', 'green') : badge('未達3種專業', 'red')}`; }
+function meetingHTML(){
+  const m = S.edit;
+  const staff = Store.all('staff').filter(s => s.active !== false || (m.attendees || []).includes(s.id));
+  const caseInfo = cid => { const c = Store.get('clients', cid); if (!c) return ''; const ck = Logic.clientChecks(c); const b = scoreBarthel(ck.last); return `<small class="muted">巴氏 ${b ? b.total : '—'}｜處方 ${ck.plan ? 'v' + ck.plan.version : '無'}｜近30天執行率 ${ck.st?.rate ?? '—'}%｜再評 ${ck.reassessDue ? rocDate(ck.reassessDue.date) : '未評估'}</small>`; };
+  return `<div class="toolbar sticky-bar"><a class="btn" href="#/meetings">${icon('back', 16)}會議列表</a><span class="sp"></span>
+    ${m.id ? btn('刪除', `if(askConfirm('確定刪除此會議紀錄？')){Store.remove('meetings','${m.id}');S.dirty=false;App.go('#/meetings')}`, { k:'danger ghost', i:'trash' }) + btn('列印', `printMeeting('${m.id}')`, { i:'print' }) : ''}${btn('儲存', 'saveMeeting()', { k:'primary', i:'check' })}</div>
+  <section class="card"><h2>會議資訊</h2><div class="form-grid g3">
+    ${F.field('會議日期', F.date('date'), { req:true })}${F.field('類型', F.select('type', ['定期跨專業個案討論會', '臨時個案討論會', '出院/轉銜討論會'], { blank:false }))}${F.field('主席', F.select('hostId', staffOpts()))}</div>
+    ${F.field('出席人員', `<div class="pills">${staff.map(s => F.checkArr('attendees', s.id, `${s.name}（${s.role}）`)).join('')}</div>`)}
+    <h3>外部專業人員</h3>${(m.external || []).map((x, i) => `<div class="row-edit">${F.input(`external.${i}.name`, { ph:'姓名' })}${F.input(`external.${i}.discipline`, { ph:'專業，例：營養師（特約）', attrs:'onchange="setTimeout(()=>{const el=$(\'#dis\');if(el)el.innerHTML=disHTML()},0)"' })}${btn('✕', `S.edit.external.splice(${i},1);rerender(meetingHTML)`, { k:'sm ghost' })}</div>`).join('')}
+    ${btn('新增外部人員', `S.edit.external.push({});rerender(meetingHTML)`, { k:'sm', i:'plus' })}
+    <div class="notice" id="dis">${disHTML()}</div>
+  </section>
+  <section class="card"><h2>前次決議追蹤 <small>評鑑要求紀錄應包含前次決議之追蹤及檢討</small></h2>
+    ${(m.followups || []).length ? `<table class="tbl"><thead><tr><th>決議事項</th><th>個案</th><th>負責人</th><th>執行狀態</th><th>追蹤說明</th></tr></thead><tbody>${m.followups.map((f, i) => `<tr><td>${esc(f.text)}</td><td>${esc(f.clientId ? clientName(f.clientId) : '')}</td><td>${esc(staffName(f.owner))}</td><td>${F.select(`followups.${i}.status`, ['待執行', '執行中', '已完成'], { blank:false })}</td><td>${F.input(`followups.${i}.note`)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">無前次未完成決議。</p>'}
+  </section>
+  <section class="card"><h2>個案討論</h2>
+    ${(m.cases || []).map((x, i) => `<div class="case-b"><div class="ic-h"><b>${esc(clientName(x.clientId))}</b>${caseInfo(x.clientId)}<span class="sp"></span>${btn('移除', `S.edit.cases.splice(${i},1);rerender(meetingHTML)`, { k:'sm ghost' })}</div>${F.text(`cases.${i}.discussion`, { rows:3, ph:'各專業意見：功能變化、處方執行狀況、困難、建議調整…' })}</div>`).join('')}
+    <div class="row-edit"><select class="inp" id="addcase"><option value="">— 加入討論個案 —</option>${clientOpts().filter(([v]) => !(m.cases || []).some(x => x.clientId === v)).map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select>${btn('加入', `const v=$('#addcase').value;if(v){S.edit.cases.push({clientId:v,discussion:''});rerender(meetingHTML)}`, { k:'sm' })}</div>
+    ${F.field('其他討論事項', F.text('content', { rows:3 }))}
+  </section>
+  <section class="card"><h2>本次決議</h2>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>決議事項</th><th>個案</th><th>負責人</th><th>期限</th><th></th></tr></thead><tbody>
+    ${(m.decisions || []).map((d, i) => `<tr><td>${F.input(`decisions.${i}.text`)}</td><td>${F.select(`decisions.${i}.clientId`, clientOpts())}</td><td>${F.select(`decisions.${i}.owner`, staffOpts())}</td><td>${F.date(`decisions.${i}.due`)}</td><td>${btn('✕', `S.edit.decisions.splice(${i},1);rerender(meetingHTML)`, { k:'sm ghost' })}</td></tr>`).join('')}
+    </tbody></table></div>${btn('新增決議', `S.edit.decisions.push({id:Store.newId(),status:'待執行',due:addMonths(S.edit.date,1)});rerender(meetingHTML)`, { k:'sm', i:'plus' })}
+  </section>`;
+}
+function saveMeeting(){
+  const m = S.edit;
+  if (!m.date) return toast('請填寫會議日期', 'err');
+  m.decisions = (m.decisions || []).filter(d => d.text?.trim());
+  const dis = Logic.meetingDisciplines(m);
+  if (dis.length < 3 && !askConfirm(`參與專業僅 ${dis.length} 種，評鑑要求至少3種不同專業。仍要儲存嗎？`)) return;
+  for (const f of m.followups || []) { const src = Store.get('meetings', f.meetingId); const d = src?.decisions?.find(x => x.id === f.decisionId); if (d) { d.status = f.status; d.followNote = f.note; d.followedAt = m.date; Store.upsert('meetings', src); } }
+  Store.upsert('meetings', m); S.dirty = false; toast('會議紀錄已儲存'); App.go('#/meetings');
+}
+
+/* ---------------- 意外事件（B5／B6） ---------------- */
+const INC_TYPES = ['跌倒', '嗆噎', '走失', '外傷/瘀傷', '急症送醫', '用藥錯誤', '衝突/行為事件', '其他'];
+function incidentTable(list){
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>時間</th><th>個案</th><th>類型</th><th>地點</th><th>送醫</th><th>家屬通知</th><th>分析/改善</th><th>狀態</th></tr></thead><tbody>${list.map(i => `<tr class="click" onclick="App.go('#/incident/${i.id}')"><td>${rocDate(i.datetime)} ${(i.datetime || '').slice(11, 16)}</td><td>${esc(clientName(i.clientId))}</td><td>${badge(i.type, i.type === '跌倒' ? 'amber' : '')}</td><td>${esc(i.place || '')}</td><td>${i.toHospital ? '是' : '否'}</td><td>${i.familyAt ? '✓' : badge('未記錄', 'red')}</td><td>${i.analysis && i.improvement ? '✓' : badge('待補', 'amber')}</td><td>${i.closed ? badge('結案', 'green') : badge('追蹤中')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function pageIncidents(){
+  setTitle('意外事件', '紀錄、分析、改善與追蹤');
+  const list = Store.all('incidents').sort(byDate('datetime')).reverse();
+  const yr = todayISO().slice(0, 4), thisYear = list.filter(i => i.datetime?.startsWith(yr));
+  const byType = {}; thisYear.forEach(i => byType[i.type] = (byType[i.type] || 0) + 1);
+  return `<div class="toolbar"><a class="btn primary" href="#/incident/new">${icon('plus', 16)}登錄意外事件</a><span class="sp"></span>${btn('匯出年度事件分析 CSV', 'exportIncidents()', { i:'download' })}</div>
+  <section class="card"><h2>${+yr - 1911}年度統計 <small>共 ${thisYear.length} 件</small></h2><div class="kpis sm">${Object.entries(byType).map(([k, v]) => `<div class="kpi"><div class="k-n">${v}</div><div class="k-l">${esc(k)}</div></div>`).join('') || '<p class="muted">本年度無事件</p>'}</div></section>
+  <section class="card flush">${list.length ? incidentTable(list) : empty('尚無意外事件紀錄')}</section>`;
+}
+function pageIncidentEdit(id, params){
+  const i = id === 'new' ? { datetime:new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16), clientId:params.get('client') || '', type:'跌倒', reporterId:App.currentUserId(), toHospital:false, closed:false } : clone(Store.get('incidents', id) || {});
+  if (!i.datetime) { App.go('#/incidents'); return ''; }
+  S.edit = i; setTitle(id === 'new' ? '登錄意外事件' : '意外事件紀錄');
+  return `<div class="toolbar sticky-bar"><a class="btn" href="#/incidents">${icon('back', 16)}事件列表</a><span class="sp"></span>
+    ${i.id ? btn('刪除', `if(askConfirm('確定刪除？')){Store.remove('incidents','${i.id}');S.dirty=false;App.go('#/incidents')}`, { k:'danger ghost', i:'trash' }) + btn('列印', `printIncident('${i.id}')`, { i:'print' }) : ''}${btn('儲存', 'saveIncident()', { k:'primary', i:'check' })}</div>
+  <section class="card"><h2>事件經過</h2><div class="form-grid g3">
+    ${F.field('發生時間', F.input('datetime', { type:'datetime-local' }), { req:true })}${F.field('個案', F.select('clientId', clientOpts(true)), { req:true })}${F.field('事件類型', F.select('type', INC_TYPES, { blank:false }))}
+    ${F.field('地點', F.input('place', { ph:'例：廁所、活動區' }))}${F.field('發現/通報人', F.select('reporterId', staffOpts()))}${F.field('傷害程度', F.select('severity', ['無傷害', '輕度（瘀青擦傷）', '中度（需就醫處置）', '重度（骨折/住院）']))}
+    ${F.field('事件經過', F.text('description', { rows:3 }), { cls:'span3' })}${F.field('立即處理', F.text('handling', { rows:2 }), { cls:'span3' })}</div></section>
+  <section class="card"><h2>送醫與家屬聯繫（B6）</h2><div class="form-grid g3">
+    ${F.field('是否送醫', F.check('toHospital', '已送醫'))}${F.field('就醫院所', F.input('hospital'))}${F.field('送醫前緊急處置', F.input('preCare'))}
+    ${F.field('家屬通知時間', F.input('familyAt', { type:'datetime-local' }))}${F.field('通知對象/方式', F.input('familyWho'))}${F.field('家屬回應', F.input('familyNote'))}</div></section>
+  <section class="card"><h2>分析與改善（B5）</h2><div class="form-grid">
+    ${F.field('原因分析（個人/環境/照護流程）', F.text('analysis', { rows:3 }), { cls:'span2' })}${F.field('改善措施', F.text('improvement', { rows:3, ph:'例：調整處方加入平衡訓練、廁所增設扶手、如廁時改為近身監督' }), { cls:'span2' })}
+    ${F.field('追蹤結果', F.text('followUp', { rows:2 }), { cls:'span2' })}${F.field('結案', F.check('closed', '已完成追蹤並結案'))}</div>
+    ${i.type === '跌倒' && i.clientId ? `<div class="notice">跌倒事件建議同步檢討復能處方：<a href="#/client/${i.clientId}/plan">前往處方</a></div>` : ''}</section>`;
+}
+function saveIncident(){ const i = S.edit; if (!i.datetime || !i.clientId) return toast('請填寫發生時間與個案', 'err'); if (i.closed && (!i.analysis || !i.improvement) && !askConfirm('尚未填寫原因分析或改善措施，仍要結案嗎？')) return; Store.upsert('incidents', i); S.dirty = false; toast('已儲存'); App.go('#/incidents'); }
+function exportIncidents(){ exportCSV('意外事件_' + todayISO() + '.csv', ['發生時間', '個案', '類型', '地點', '傷害程度', '經過', '立即處理', '送醫', '院所', '家屬通知', '原因分析', '改善措施', '追蹤', '結案'], Store.all('incidents').sort(byDate('datetime')).map(i => [i.datetime, clientName(i.clientId), i.type, i.place, i.severity, i.description, i.handling, i.toHospital ? '是' : '否', i.hospital, i.familyAt, i.analysis, i.improvement, i.followUp, i.closed ? '是' : '否'])); }
+
+/* ---------------- 活動與訓練（B7／B8／B11） ---------------- */
+const ACT_KINDS = ['團體活動', '社區活動', '照顧者支持活動', '員工教育訓練'];
+let actFilter = '';
+function pageActivities(){
+  setTitle('活動與教育訓練', 'B7 團體/社區活動・B8 照顧者支持・B11 教育訓練');
+  const list = Store.all('activities').filter(a => !actFilter || a.kind === actFilter).sort(byDate('date')).reverse();
+  return `<div class="toolbar">${ACT_KINDS.map(k => btn('新增' + k, `editActivity(null,'${k}')`, { k:'sm', i:'plus' })).join('')}<span class="sp"></span>
+    <select class="inp" onchange="actFilter=this.value;route()" aria-label="篩選">${['', ...ACT_KINDS].map(k => `<option value="${k}" ${actFilter === k ? 'selected' : ''}>${k || '全部類別'}</option>`).join('')}</select></div>
+  <section class="card flush"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>日期</th><th>類別</th><th>名稱</th><th>性質/時數</th><th>參與</th></tr></thead><tbody>
+  ${list.map(a => `<tr class="click" onclick="editActivity('${a.id}')"><td>${rocDate(a.date)}</td><td>${badge(a.kind)}</td><td>${esc(a.title)}</td><td>${a.kind === '員工教育訓練' ? (a.hours || 0) + ' 小時' + (a.infection ? ' ' + badge('感管') : '') + (a.selfcareTopic ? ' ' + badge('自我照顧', 'green') : '') : esc(a.nature || '')}</td><td>${a.kind === '員工教育訓練' ? (a.staffIds || []).length + ' 位員工' : (a.clientIds || []).length + ' 位長輩' + (a.familyCount ? '、家屬 ' + a.familyCount + ' 人' : '')}</td></tr>`).join('') || `<tr><td colspan="5">${empty('尚無紀錄')}</td></tr>`}
+  </tbody></table></div></section>`;
+}
+function editActivity(id, kind){
+  S.edit = id ? clone(Store.get('activities', id)) : { date:todayISO(), kind, title:'', clientIds:[], staffIds:[], leaderId:App.currentUserId() };
+  const a = S.edit, tr = a.kind === '員工教育訓練';
+  const html = `<div class="form-grid">
+    ${F.field('日期', F.date('date'), { req:true })}${F.field('類別', F.select('kind', ACT_KINDS, { blank:false }))}
+    ${F.field('名稱/主題', F.input('title'), { req:true, cls:'span2' })}
+    ${tr ? `${F.field('時數', F.num('hours', { min:0, step:0.5 }))}${F.field('辦理單位', F.input('org'))}
+      ${F.field('課程屬性', F.check('infection', '感染管制課程') + F.check('selfcareTopic', '提升服務對象自我照顧能力（如肌力、移位、吞嚥訓練）'), { cls:'span2' })}
+      ${F.field('參訓人員', `<div class="pills">${Store.all('staff').map(s => F.checkArr('staffIds', s.id, s.name)).join('')}</div>`, { cls:'span2' })}`
+    : `${F.field('性質', F.select('nature', ['動態', '靜態', '輔療', '綜合']))}${F.field('帶領人', F.select('leaderId', staffOpts()))}
+      ${F.field('參與長輩', `<div class="pills">${clientOpts().map(([v, l]) => F.checkArr('clientIds', v, l)).join('')}</div>`, { cls:'span2' })}
+      ${F.field('家屬/社區參與人數', F.num('familyCount', { min:0 }))}${F.field('鼓勵參與策略', F.input('strategy', { ph:'例：邀請熟識長輩同組、擔任小老師' }))}`}
+    ${F.field('內容與成效', F.text('content', { rows:3 }), { cls:'span2' })}</div>`;
+  openModal((id ? '編輯' : '新增') + a.kind, html, { wide:true, extra:id ? btn('刪除', `if(askConfirm('確定刪除？')){Store.remove('activities','${id}');closeModal(true);route()}`, { k:'danger' }) : '',
+    onSave:() => { if (!S.edit.title?.trim()) { toast('請填寫名稱', 'err'); return false; } Store.upsert('activities', S.edit); S.dirty = false; toast('已儲存'); route(); }, restore:() => { S.dirty = false; } });
+}
+
+/* ---------------- 評鑑與成效 ---------------- */
+function scoreBy(n, total, table){ for (const [need, pts] of table) if (n >= need) return pts; return 0; }
+function pageReports(){
+  setTitle('評鑑自主檢核與成效指標', '依115年度社區式日間照顧評鑑基準');
+  const today = todayISO(), active = Store.all('clients').filter(c => c.status === '服務中');
+  const cks = active.map(c => ({ c, ...Logic.clientChecks(c) }));
+  const fail = (f) => cks.filter(x => !f(x)).map(x => `<a href="#/client/${x.c.id}">${esc(x.c.name)}</a>`);
+  const ms = Logic.meetings(), lm = ms.at(-1);
+  const recentMs = ms.filter(m => m.date >= addMonths(today, -12));
+  const gaps = []; const since = Store.all('clients').map(c => c.admitDate).filter(Boolean).sort()[0] || today; let prev = since > addMonths(today, -12) ? since : addMonths(today, -12);
+  for (const m of recentMs) { if (diffDays(prev, m.date) > 92) gaps.push(`${rocDate(prev)}～${rocDate(m.date)}`); prev = m.date; }
+  if (diffDays(prev, today) > 92) gaps.push(`${rocDate(prev)}～今`);
+  const msOK = recentMs.length > 0 && gaps.length === 0 && recentMs.every(m => Logic.meetingDisciplines(m).length >= 3);
+  const followOK = ms.length < 2 || ms.slice(1).every(m => (m.followups || []).length > 0 || !ms.slice(0, ms.indexOf(m)).some(p => (p.decisions || []).length));
+  const b1 = [
+    [cks.every(x => x.hasPlan), fail(x => x.hasPlan)],
+    [cks.every(x => x.domains), fail(x => x.domains)],
+    [cks.every(x => x.planFromAssess && x.execRecorded), fail(x => x.planFromAssess && x.execRecorded)],
+    [cks.every(x => x.reassessOK), fail(x => x.reassessOK)],
+    [cks.every(x => x.referralOK), fail(x => x.referralOK)],
+    [msOK && followOK, [...(gaps.length ? ['間隔超過3個月：' + gaps.join('、')] : []), ...recentMs.filter(m => Logic.meetingDisciplines(m).length < 3).map(m => rocDate(m.date) + ' 專業不足3種'), ...(followOK ? [] : ['有會議未追蹤前次決議']), ...(recentMs.length ? [] : ['近一年無會議紀錄'])]],
+  ];
+  const b1n = b1.filter(x => x[0]).length;
+  const b1pts = scoreBy(b1n, 6, [[6, 2.5], [5, 1.88], [4, 1.25], [3, 0.63]]);
+
+  // B3 體溫
+  const from30 = addDays(today, -29); let pd = 0, pt = 0;
+  Store.all('vitals').filter(v => v.date >= from30 && v.present).forEach(v => { pd++; if (v.temp !== '' && v.temp != null) pt++; });
+  // B5/B6
+  const incs = Store.all('incidents').filter(i => i.datetime >= addMonths(today, -12));
+  const incOK = incs.filter(i => i.analysis && i.improvement).length, hosp = incs.filter(i => i.toHospital), hospOK = hosp.filter(i => i.familyAt && i.hospital).length;
+  // B7
+  const months = []; for (let k = 11; k >= 0; k--) months.push(addMonths(today.slice(0, 7) + '-01', -k).slice(0, 7));
+  const acts = Store.all('activities');
+  const mOK = months.map(mo => acts.some(a => a.date?.startsWith(mo) && (a.kind === '團體活動' || a.kind === '社區活動')));
+  // B8
+  const contactOK = cks.filter(x => x.lastContact && diffDays(x.lastContact, today) <= 90).length;
+  const yr = today.slice(0, 4), cgAct = acts.filter(a => a.kind === '照顧者支持活動' && a.date?.startsWith(yr)).length;
+  // B9 輔具
+  const aidsN = active.filter(c => c.aids).length;
+  // B10
+  const scPlans = cks.filter(x => x.plan?.items?.some(i => i.selfcare)).length, scExec = cks.reduce((s, x) => s + (x.st?.selfcare || 0), 0);
+  // B11
+  const staff = Store.all('staff').filter(s => s.active !== false);
+  const trainings = acts.filter(a => a.kind === '員工教育訓練' && a.date?.startsWith(yr));
+  const hrs = staff.map(s => { const t = trainings.filter(a => (a.staffIds || []).includes(s.id)); return { s, h:t.reduce((x, a) => x + (+a.hours || 0), 0), inf:t.some(a => a.infection), sc:t.some(a => a.selfcareTopic) }; });
+
+  const card = (code, rows, extra = '') => `<section class="card ind"><h2><span class="code">${code}</span>${INDICATORS[code].name}${extra}</h2><ul class="checks">${rows.map(([ok, t, d]) => `<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✕'} ${t}${d ? `<div class="det">${d}</div>` : ''}</li>`).join('')}</ul></section>`;
+  const oc = Logic.outcomes();
+  return `<div class="notice">以下為系統依登錄資料自動檢核的<b>自主檢核參考</b>，實際分數以評鑑委員文件檢閱與現場訪談為準。服務中個案 <b>${active.length}</b> 位。</div>
+  <div class="toolbar">${btn('隨機抽3位個案列印評鑑資料', 'printSample()', { k:'primary', i:'print' })}${btn('列印本頁檢核表', 'printReport()', { i:'print' })}<span class="sp"></span>
+    ${btn('個案名冊', 'csvClients()', { k:'sm', i:'download' })}${btn('評估總表', 'csvAssess()', { k:'sm', i:'download' })}${btn('處方總表', 'csvPlans()', { k:'sm', i:'download' })}${btn('執行紀錄', 'csvExecs()', { k:'sm', i:'download' })}${btn('體溫紀錄', 'csvVitals()', { k:'sm', i:'download' })}</div>
+  <div id="report-body">
+  ${card('B1', b1.map(([ok, d], i) => [ok, INDICATORS.B1.items[i], d.length ? '未符合：' + d.join('、') : '']), ` <small>符合 ${b1n}/6 項，預估 <b>${b1pts}</b>/2.5 分</small>`)}
+  <div class="grid2">
+  ${card('B3', [[pd > 0 && pt === pd, `近30天出席人次 ${pd}，已測體溫 ${pt}（${pct(pt, pd) ?? '—'}%）`]])}
+  ${card('B5', [[incs.length === 0 || incOK === incs.length, `近一年事件 ${incs.length} 件，已完成分析與改善 ${incOK} 件`, incs.length ? '' : '無事件發生時，請備妥處理辦法與流程及演練紀錄']])}
+  ${card('B6', [[hosp.length === 0 || hospOK === hosp.length, `近一年送醫 ${hosp.length} 件，就醫與家屬聯繫紀錄完整 ${hospOK} 件`]])}
+  ${card('B7', [[mOK.every(Boolean), `近12個月每月團體/社區活動：${mOK.filter(Boolean).length}/12 個月`, months.filter((m, i) => !mOK[i]).map(m => `${+m.slice(0, 4) - 1911}/${m.slice(5)}`).join('、') ? '缺：' + months.filter((m, i) => !mOK[i]).map(m => `${+m.slice(0, 4) - 1911}/${m.slice(5)}`).join('、') : '']])}
+  ${card('B8', [[contactOK === active.length && active.length > 0, `近3個月有家屬聯繫紀錄：${contactOK}/${active.length} 位`], [cgAct >= 1, `本年度照顧者支持性活動 ${cgAct} 場（每年≥1）`]])}
+  ${card('B9', [[true, `已登錄使用輔具個案 ${aidsN} 位；處方中「進食、移位」等項目已附輔具使用說明`]])}
+  ${card('B10', [[scPlans === active.length && active.length > 0, `處方含自立支援項目：${scPlans}/${active.length} 位`], [scExec > 0, `近30天自立支援執行紀錄 ${scExec} 筆`]])}
+  ${card('B11', [[hrs.length > 0 && hrs.every(x => x.h >= 20 && x.inf), `本年度繼續教育≥20小時且含感管：${hrs.filter(x => x.h >= 20 && x.inf).length}/${hrs.length} 人`, hrs.filter(x => x.h < 20 || !x.inf).map(x => `${esc(x.s.name)} ${x.h}h${x.inf ? '' : '(缺感管)'}`).join('、')], [hrs.length > 0 && hrs.every(x => x.sc), `已參與提升自我照顧能力課程：${hrs.filter(x => x.sc).length}/${hrs.length} 人`]])}
+  </div>
+  <section class="card"><h2>復能成效指標 <small>可作為 A1 年度業務計畫目標與檢討依據</small></h2><div class="kpis">
+    <div class="kpi"><div class="k-n">${oc.adlKeep ?? '—'}<small>%</small></div><div class="k-l">ADL 維持或進步率<br><small>${oc.pairs} 位有兩次以上巴氏評估</small></div></div>
+    <div class="kpi"><div class="k-n">${oc.adlImprove ?? '—'}<small>%</small></div><div class="k-l">ADL 進步率</div></div>
+    <div class="kpi"><div class="k-n">${oc.goalMet ?? '—'}<small>%</small></div><div class="k-l">短期目標達成率（GAS≥0）<br><small>${oc.goals} 項目標</small></div></div>
+    <div class="kpi"><div class="k-n">${oc.copmUp ?? '—'}<small>%</small></div><div class="k-l">有意義活動表現進步≥2分<br><small>${oc.copmN} 位</small></div></div>
+    <div class="kpi"><div class="k-n">${oc.execRate ?? '—'}<small>%</small></div><div class="k-l">近30天處方執行率</div></div>
+    <div class="kpi"><div class="k-n">${oc.fallRate ?? '—'}</div><div class="k-l">跌倒發生率（‰ 服務人日）<br><small>近一年 ${oc.falls} 件／${oc.days} 人日</small></div></div>
+  </div></section>
+  <section class="card"><h2>各類處方執行率（近30天）</h2>${catTable()}</section>
+  </div>`;
+}
+function catTable(){
+  const today = todayISO(), from = addDays(today, -29), idx = Logic.index(), agg = {};
+  Store.all('clients').filter(c => c.status === '服務中').forEach(c => { const s = Logic.execStats(c, from, today, idx); for (const [k, v] of Object.entries(s.byCat)) { const a = agg[k] ||= { expected:0, done:0, partial:0 }; a.expected += v.expected; a.done += v.done; a.partial += v.partial; } });
+  const rows = Object.entries(agg); if (!rows.length) return empty('尚無資料');
+  return `<table class="tbl"><thead><tr><th>類別</th><th>應執行</th><th>完成</th><th>部分</th><th>執行率</th></tr></thead><tbody>${rows.map(([k, v]) => { const r = Math.round((v.done + v.partial * 0.5) / v.expected * 100); return `<tr><td>${esc(k)}</td><td>${v.expected}</td><td>${v.done}</td><td>${v.partial}</td><td><div class="mini-bar"><i style="width:${r}%"></i></div>${r}%</td></tr>`; }).join('')}</tbody></table>`;
+}
+function csvClients(){ exportCSV('個案名冊_' + todayISO() + '.csv', ['姓名', '性別', '出生日期', '年齡', 'CMS', '收案日', '狀態', '結案日', '診斷', '失智', '飲食', '輔具', '主要照顧者', '關係', '電話'], Store.all('clients').map(c => [c.name, c.gender, c.birth, ageAt(c.birth), CMS_LEVELS[c.cmsLevel], c.admitDate, c.status, c.closeDate, c.diagnoses, c.dementia ? '是' : '', c.diet, c.aids, c.cgName, c.cgRel, c.cgPhone])); }
+function csvAssess(){ exportCSV('評估總表_' + todayISO() + '.csv', ['個案', '日期', '類別', '評估者', '巴氏', 'IADL', 'SPMSQ錯題', 'TUG秒', '單腳站秒', '30秒坐站', '5次坐站秒', '握力kg', '步速m/s', 'BMI', 'GDS15', 'MNA-SF', '疼痛NRS', '問題'], Store.all('assessments').sort(byDate('date')).map(a => [clientName(a.clientId), a.date, a.type, staffName(a.assessorId), scoreBarthel(a)?.total, scoreIADL(a)?.total, scoreSPMSQ(a)?.errors, a.phy?.tug, a.phy?.oneLeg, a.phy?.cs30, a.phy?.cs5, a.phy?.grip, gaitSpeed(a), calcBMI(a), scoreGDS(a)?.total, scoreMNA(a)?.total, a.pain?.nrs, (a.problems || []).map(p => p.text).join('；')])); }
+function csvPlans(){ const rows = []; Store.all('plans').forEach(p => (p.items || []).forEach(it => rows.push([clientName(p.clientId), 'v' + p.version, p.status, p.startDate, p.endDate || '', p.reviewDate, staffName(p.prescriberId), it.name, it.cat, it.dose, (it.days || []).map(w => WEEKDAYS[w]).join(''), it.assist, it.selfcare ? '是' : '', p.changeReason || '']))); exportCSV('處方總表_' + todayISO() + '.csv', ['個案', '版本', '狀態', '生效日', '結束日', '預定再評', '開立人', '項目', '類別', '劑量', '執行日', '目標協助', '自立支援', '修正理由'], rows); }
+function csvExecs(){ exportCSV('執行紀錄_' + todayISO() + '.csv', ['日期', '個案', '項目', '類別', '狀態', '未執行原因', '協助程度', '耐受度', '實際量', '觀察', '執行人'], Store.all('execs').sort(byDate('date')).map(e => [e.date, clientName(e.clientId), e.itemName, e.cat, e.status, e.reason, e.assist, e.tolerance, e.amount, e.note, staffName(e.staffId || e.updatedBy)])); }
+function csvVitals(){ exportCSV('出席體溫_' + todayISO() + '.csv', ['日期', '個案', '出席', '體溫'], Store.all('vitals').sort(byDate('date')).map(v => [v.date, clientName(v.clientId), v.present === true ? '出席' : v.present === false ? '請假' : '', v.temp])); }
+
+/* ---------------- 設定與備份 ---------------- */
+function pageSettings(){
+  setTitle('設定與備份');
+  const staff = Store.all('staff');
+  const lastBk = Store.DB.meta.lastBackup;
+  return `<div class="grid2">
+  <section class="card"><h2>中心資料</h2>
+    <div class="field"><label class="lbl">中心名稱</label><input class="inp" value="${esc(Store.DB.meta.center || '')}" onchange="Store.setMeta('center',this.value);renderShell();toast('已更新')" placeholder="例：○○日間照顧中心"></div>
+    <div class="field"><label class="lbl">機構代碼（選填）</label><input class="inp" value="${esc(Store.DB.meta.code || '')}" onchange="Store.setMeta('code',this.value)"></div>
+  </section>
+  <section class="card"><h2>資料備份與還原</h2>
+    <p>資料儲存在<b>這台電腦這個瀏覽器</b>中。清除瀏覽器資料或換電腦會遺失，請<b>每週至少匯出一次</b>備份到隨身碟或機構雲端。${lastBk ? `<br>上次備份：${rocDate(lastBk)} ${diffDays(lastBk.slice(0, 10), todayISO()) > 7 ? badge('超過7天', 'red') : ''}` : '<br>' + badge('尚未備份', 'red')}</p>
+    <div class="btn-row">${btn('匯出備份', 'backup(false)', { k:'primary', i:'download' })}${btn('匯出加密備份', 'backup(true)', { i:'download' })}</div>
+    <div class="btn-row">${btn('匯入／合併其他裝置資料', `$('#imp').click()`, { i:'upload' })}<input type="file" id="imp" accept=".json,application/json" hidden onchange="importFile(this.files[0],false);this.value=''">
+    ${btn('以備份檔完全取代', `$('#imp2').click()`, { k:'danger ghost' })}<input type="file" id="imp2" accept=".json,application/json" hidden onchange="importFile(this.files[0],true);this.value=''"></div>
+    <p class="hint">多台平板使用時：各台定期「匯出」，在主電腦以「匯入／合併」整合（同一筆資料保留較新的版本），再把合併後的檔案匯入回各台。</p>
+  </section></div>
+  <section class="card"><h2>工作人員 <small>評估者、處方開立者、照服員、討論會出席者</small></h2>
+    <div class="toolbar">${btn('新增工作人員', 'editStaff()', { k:'primary', i:'plus' })}</div>
+    <table class="tbl"><thead><tr><th>姓名</th><th>職類</th><th>狀態</th><th></th></tr></thead><tbody>${staff.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.role)}</td><td>${s.active === false ? badge('離職') : badge('在職', 'green')}</td><td>${btn('編輯', `editStaff('${s.id}')`, { k:'sm' })}</td></tr>`).join('') || `<tr><td colspan="4">${empty('請先建立工作人員')}</td></tr>`}</tbody></table>
+  </section>
+  <section class="card"><h2>自訂處方項目 <small>擴充內建 ${EXERCISES.length} 項處方庫</small></h2>
+    <div class="toolbar">${btn('新增自訂處方', 'editLib()', { k:'primary', i:'plus' })}</div>
+    <table class="tbl"><thead><tr><th>類別</th><th>名稱</th><th>預設劑量</th><th></th></tr></thead><tbody>${Store.all('library').map(e => `<tr><td>${esc(e.cat)}</td><td>${esc(e.name)}</td><td>${esc(e.dose)}</td><td>${btn('編輯', `editLib('${e.id}')`, { k:'sm' })}</td></tr>`).join('') || `<tr><td colspan="4" class="muted">尚無自訂項目</td></tr>`}</tbody></table>
+  </section>
+  <section class="card"><h2>示範與重設</h2><div class="btn-row">${btn('載入示範資料', 'if(askConfirm(\'將加入示範個案與紀錄（不會刪除現有資料）。繼續？\'))loadDemo()')}${btn('清除示範資料', 'clearDemo()')}${btn('清除全部資料', 'wipeAll()', { k:'danger' })}</div></section>`;
+}
+function editStaff(id){
+  S.edit = id ? clone(Store.get('staff', id)) : { role:'照顧服務員', active:true };
+  openModal(id ? '編輯工作人員' : '新增工作人員', `<div class="form-grid">${F.field('姓名', F.input('name'), { req:true })}${F.field('職類', F.select('role', ROLES, { blank:false }))}${F.field('在職', F.check('active', '在職中'))}</div>`,
+    { onSave:() => { if (!S.edit.name?.trim()) { toast('請填寫姓名', 'err'); return false; } const s = Store.upsert('staff', S.edit); S.dirty = false; if (!App.currentUserId()) App.setUser(s.id); else { renderShell(); route(); } }, restore:() => { S.dirty = false; } });
+}
+function editLib(id){
+  S.edit = id ? clone(Store.get('library', id)) : { id:'', cat:'肌力', name:'', dose:'', how:'', caution:'', selfcare:false };
+  openModal(id ? '編輯自訂處方' : '新增自訂處方', `<div class="form-grid">${F.field('名稱', F.input('name'), { req:true })}${F.field('類別', F.select('cat', EX_CATS, { blank:false }))}${F.field('預設劑量', F.input('dose'))}${F.field('自立支援', F.check('selfcare', '屬自我照顧能力訓練'))}${F.field('執行說明', F.text('how'), { cls:'span2' })}${F.field('注意事項', F.text('caution', { rows:2 }), { cls:'span2' })}</div>`,
+    { wide:true, extra:id ? btn('刪除', `Store.remove('library','${id}');closeModal(true);route()`, { k:'danger' }) : '', onSave:() => { if (!S.edit.name?.trim()) { toast('請填寫名稱', 'err'); return false; } if (!S.edit.id) S.edit.id = 'lib_' + Store.newId(); Store.upsert('library', S.edit); S.dirty = false; route(); }, restore:() => { S.dirty = false; } });
+}
+async function backup(enc){
+  const data = Store.exportAll(); let out = JSON.stringify(data), name = `復能系統備份_${todayISO()}.json`;
+  if (enc) { const pw = prompt('請設定備份密碼（至少6碼，遺失無法復原）：'); if (!pw) return; if (pw.length < 6) return toast('密碼至少6碼', 'err'); if (prompt('請再輸入一次密碼：') !== pw) return toast('兩次密碼不一致', 'err'); out = await encryptJSON(data, pw); name = name.replace('.json', '_加密.json'); }
+  download(name, out, 'application/json'); Store.setMeta('lastBackup', new Date().toISOString()); toast('備份已下載：' + name); route();
+}
+async function importFile(file, replace){
+  if (!file) return;
+  try {
+    let data = JSON.parse(await file.text());
+    if (data.enc) { const pw = prompt('此為加密備份，請輸入密碼：'); if (!pw) return; try { data = await decryptJSON(data, pw); } catch(e){ return toast('密碼錯誤或檔案損壞', 'err'); } }
+    if (replace && !askConfirm('將以備份檔「完全取代」目前所有資料，無法復原。確定？')) return;
+    const r = Store.mergeImport(data, replace); Store.flush();
+    toast(replace ? `已還原 ${r.added} 筆資料` : `合併完成：新增 ${r.added} 筆、更新 ${r.updated} 筆`); renderShell(); route();
+  } catch(e){ toast('匯入失敗：' + e.message, 'err'); }
+}
+function wipeAll(){ if (!askConfirm('將刪除本機所有資料，無法復原。建議先匯出備份。確定？')) return; if (prompt('請輸入「確認刪除」四個字：') !== '確認刪除') return; Store.clearAll(); Store.flush(); try { localStorage.removeItem('rehab:user'); } catch(e){} toast('已清除'); renderShell(); route(); }
+function clearDemo(){ let n = 0; for (const c of COLLECTIONS) for (const r of Store.DB[c]) if (r.demo && !r.deleted) { Store.remove(c, r.id); n++; } try { if (Store.get('staff', App.currentUserId()) == null) localStorage.removeItem('rehab:user'); } catch(e){} toast(`已清除 ${n} 筆示範資料`); renderShell(); route(); }
+
+/* ---- prints.js ---- */
+/* ================================================================
+   列印：復能處方箋、評估報告、個案復能歷程、討論會、意外事件
+   ================================================================ */
+function pClientHead(c){ return `<table class="p-t"><tr><th>姓名</th><td>${esc(c.name)}</td><th>性別/年齡</th><td>${esc(c.gender || '')} ${ageAt(c.birth) ?? ''}歲</td><th>CMS</th><td>${esc(CMS_LEVELS[c.cmsLevel] || '')}</td></tr>
+  <tr><th>診斷</th><td colspan="3">${esc(c.diagnoses || '')}</td><th>收案日</th><td>${rocDate(c.admitDate)}</td></tr>
+  <tr><th>輔具</th><td>${esc(c.aids || '')}</td><th>飲食</th><td>${esc(c.diet || '')}</td><th>過敏/注意</th><td>${esc(c.allergy || '')}</td></tr></table>`; }
+const sign = list => `<div class="p-sign">${list.map(x => `<div>${x}：<span></span></div>`).join('')}</div>`;
+
+function planPrintHTML(p){
+  const c = Store.get('clients', p.clientId), a = p.assessmentId ? Store.get('assessments', p.assessmentId) : null;
+  return `${pClientHead(c)}
+  <h4>處方資訊</h4><table class="p-t"><tr><th>版本</th><td>v${p.version}（${esc(p.status)}）</td><th>生效日</th><td>${rocDate(p.startDate)}</td><th>預定再評</th><td>${rocDate(p.reviewDate)}</td></tr>
+  <tr><th>開立人員</th><td>${esc(staffName(p.prescriberId))}（${esc(staffRole(p.prescriberId))}）</td><th>依據評估</th><td colspan="3">${a ? `${rocDate(a.date)} ${esc(a.type)}｜巴氏 ${scoreBarthel(a)?.total ?? '—'}、IADL ${scoreIADL(a)?.total ?? '—'}、TUG ${a.phy?.tug || '—'}秒、30秒坐站 ${a.phy?.cs30 || '—'}次` : '—'}</td></tr>
+  ${p.changeReason ? `<tr><th>修正理由</th><td colspan="5">${esc(p.changeReason)}</td></tr>` : ''}</table>
+  <h4>問題確立</h4><ol>${(p.problems || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+  <h4>目標</h4><p><b>長期目標：</b>${esc(p.longGoal || '')}</p>
+  <table class="p-t"><thead><tr><th>#</th><th>短期目標</th><th>評量方式</th><th>基準</th><th>目標</th><th>預計達成</th></tr></thead><tbody>${(p.goals || []).map((g, i) => `<tr><td>${i + 1}</td><td>${esc(g.text)}</td><td>${esc(g.measure || '')}</td><td>${esc(g.baseline || '')}</td><td>${esc(g.target || '')}</td><td>${rocDate(g.due)}</td></tr>`).join('')}</tbody></table>
+  <h4>復能處方項目</h4><table class="p-t"><thead><tr><th>#</th><th>項目</th><th>劑量</th><th>執行日</th><th>目標協助</th><th>執行說明／注意事項</th></tr></thead><tbody>${(p.items || []).map((it, i) => `<tr><td>${i + 1}</td><td>${esc(it.name)}${it.selfcare ? '<br>（自立支援）' : ''}${it.goalId ? `<br><small>對應目標${(p.goals || []).findIndex(g => g.id === it.goalId) + 1}</small>` : ''}</td><td>${esc(it.dose)}</td><td>週${(it.days || []).map(w => WEEKDAYS[w]).join('、')}</td><td>${esc(it.assist || '')}</td><td>${esc(it.how || '')}${it.caution ? `<br><b>注意：</b>${esc(it.caution)}` : ''}</td></tr>`).join('')}</tbody></table>
+  ${(p.referrals || []).length ? `<h4>轉介</h4><table class="p-t"><thead><tr><th>對象</th><th>原因</th><th>日期</th><th>結果</th></tr></thead><tbody>${p.referrals.map(r => `<tr><td>${esc(r.to)}</td><td>${esc(r.reason || '')}</td><td>${rocDate(r.date)}</td><td>${esc(r.result || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+  ${p.note ? `<h4>居家延續建議</h4><p>${esc(p.note)}</p>` : ''}
+  <p>${p.consent?.explained ? `☑ 已於 ${rocDate(p.consent.date)} 向 ${esc(p.consent.by || '')} 說明處方內容並取得同意` : '☐ 已向個案/家屬說明處方內容並取得同意'}</p>
+  ${sign(['開立人員', '督導/主任', '個案/家屬', '照顧服務員'])}`;
+}
+function printPlan(id){ const p = Store.get('plans', id); printHTML('復能處方箋（個別化服務計畫）', planPrintHTML(p)); }
+
+function assessPrintHTML(a){
+  const c = Store.get('clients', a.clientId), b = scoreBarthel(a), i = scoreIADL(a), s = scoreSPMSQ(a), g = scoreGDS(a), m = scoreMNA(a), p = a.phy || {};
+  return `${pClientHead(c)}
+  <table class="p-t"><tr><th>評估日期</th><td>${rocDate(a.date)}</td><th>類別</th><td>${esc(a.type)}</td><th>評估人員</th><td>${esc(staffName(a.assessorId))}（${esc(staffRole(a.assessorId))}）</td></tr></table>
+  <h4>量表結果</h4><table class="p-t"><tbody>
+    <tr><th>巴氏量表</th><td>${b ? b.total + '分（' + b.level + '）' : '—'}</td><th>IADL</th><td>${i ? i.total + '/8' : '—'}</td></tr>
+    <tr><th>SPMSQ</th><td>${s ? `錯 ${s.errors} 題（${spmsqLevel(s.adj)}）` : '—'}</td><th>GDS-15</th><td>${g ? g.total + '分' + (g.total >= 5 ? '（疑似憂鬱）' : '') : '—'}</td></tr>
+    <tr><th>MNA-SF</th><td>${m ? m.total + '分（' + mnaLevel(m.total) + '）' : '—'}</td><th>疼痛 NRS</th><td>${a.pain?.nrs ?? '—'} ${esc(a.pain?.site || '')}</td></tr>
+    <tr><th>TUG</th><td>${p.tug || '—'} 秒 ${esc(p.tugAid || '')}</td><th>單腳站</th><td>${p.oneLeg || '—'} 秒</td></tr>
+    <tr><th>30秒坐站</th><td>${p.cs30 ?? '—'} 次</td><th>5次坐站</th><td>${p.cs5 || '—'} 秒</td></tr>
+    <tr><th>握力</th><td>${p.grip || '—'} kg</td><th>步速</th><td>${gaitSpeed(a) ?? '—'} m/s</td></tr>
+    <tr><th>身高/體重</th><td>${p.height || '—'} cm / ${p.weight || '—'} kg</td><th>BMI</th><td>${calcBMI(a) ?? '—'}</td></tr></tbody></table>
+  <h4>巴氏量表明細</h4><table class="p-t"><tbody>${BARTHEL.map(it => `<tr><th>${it.n}</th><td>${a.adl?.[it.k] ?? '—'} 分</td><td>${esc(it.opts.find(o => o[0] === +a.adl?.[it.k])?.[1] || '')}</td></tr>`).join('')}</tbody></table>
+  <h4>身心社會評估</h4><table class="p-t"><tbody><tr><th>生理狀況</th><td>${esc(a.physio || '')}</td></tr><tr><th>心理認知情緒</th><td>${esc(a.psycho || '')}</td></tr><tr><th>家庭社會支持</th><td>${esc(a.social || '')}</td></tr><tr><th>重大生命事件</th><td>${esc(a.lifeEvents || '')}</td></tr><tr><th>期待</th><td>${esc(a.expect || '')}</td></tr></tbody></table>
+  ${(a.copm || []).some(x => x.activity) ? `<h4>有意義活動目標</h4><table class="p-t"><thead><tr><th>活動</th><th>重要性</th><th>表現</th><th>滿意度</th></tr></thead><tbody>${a.copm.filter(x => x.activity).map(x => `<tr><td>${esc(x.activity)}</td><td>${x.imp ?? ''}</td><td>${x.perf ?? ''}</td><td>${x.sat ?? ''}</td></tr>`).join('')}</tbody></table>` : ''}
+  ${(a.goalReview || []).length ? `<h4>前次目標達成評值</h4><table class="p-t"><thead><tr><th>目標</th><th>基準→目標</th><th>現值</th><th>GAS</th><th>說明</th></tr></thead><tbody>${a.goalReview.map(g => `<tr><td>${esc(g.text)}</td><td>${esc(g.baseline || '')}→${esc(g.target || '')}</td><td>${esc(g.current || '')}</td><td>${(GAS.find(x => x[0] === +g.gas) || ['', ''])[1]}</td><td>${esc(g.note || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+  <h4>問題確立</h4><ol>${(a.problems || []).map(x => `<li>${esc(x.text)}${x.referral ? `（轉介：${esc(x.referral)}）` : ''}</li>`).join('')}</ol>
+  <h4>評估摘要</h4><p>${esc(a.summary || '')}</p>${sign(['評估人員', '督導/主任'])}`;
+}
+function printAssessment(id){ printHTML('個案評估紀錄', assessPrintHTML(Store.get('assessments', id))); }
+
+function dossierHTML(c){
+  const as = Logic.assessmentsOf(c.id), ps = Logic.plansOf(c.id), today = todayISO();
+  const st = Logic.execStats(c, addDays(today, -89), today);
+  const pts = f => as.map(a => ({ x:a.date, y:f(a) }));
+  const contacts = Store.all('contacts').filter(x => x.clientId === c.id).sort(byDate('date')).slice(-8);
+  const meets = Logic.meetings().filter(m => (m.cases || []).some(x => x.clientId === c.id));
+  return `${pClientHead(c)}
+  <h4>評估歷程</h4><table class="p-t"><thead><tr><th>日期</th><th>類別</th><th>評估者</th><th>巴氏</th><th>IADL</th><th>SPMSQ錯</th><th>TUG</th><th>30秒坐站</th><th>握力</th><th>步速</th><th>GDS</th><th>MNA</th></tr></thead><tbody>${as.map(a => `<tr><td>${rocDate(a.date)}</td><td>${esc(a.type)}</td><td>${esc(staffName(a.assessorId))}</td><td>${scoreBarthel(a)?.total ?? ''}</td><td>${scoreIADL(a)?.total ?? ''}</td><td>${scoreSPMSQ(a)?.errors ?? ''}</td><td>${a.phy?.tug || ''}</td><td>${a.phy?.cs30 ?? ''}</td><td>${a.phy?.grip || ''}</td><td>${gaitSpeed(a) ?? ''}</td><td>${scoreGDS(a)?.total ?? ''}</td><td>${scoreMNA(a)?.total ?? ''}</td></tr>`).join('')}</tbody></table>
+  <div class="p-charts"><div><b>巴氏量表</b>${lineChart(pts(a => scoreBarthel(a)?.partial ? null : scoreBarthel(a)?.total), { min:0, max:100 })}</div><div><b>30秒坐站</b>${lineChart(pts(a => a.phy?.cs30), { min:0 })}</div><div><b>TUG（秒）</b>${lineChart(pts(a => a.phy?.tug), { cut:13.5 })}</div></div>
+  <h4>處方版本歷程</h4><table class="p-t"><thead><tr><th>版本</th><th>期間</th><th>開立</th><th>項目</th><th>修正理由</th></tr></thead><tbody>${ps.map(p => `<tr><td>v${p.version}<br>${esc(p.status)}</td><td>${rocDate(p.startDate)}～${p.endDate ? rocDate(p.endDate) : ''}</td><td>${esc(staffName(p.prescriberId))}</td><td>${(p.items || []).map(i => esc(i.name)).join('、')}</td><td>${esc(p.changeReason || '')}</td></tr>`).join('')}</tbody></table>
+  <h4>近90天執行狀況</h4><p>應執行 ${st.expected} 次｜完成 ${st.done}｜部分 ${st.partial}｜未執行 ${st.skipped}｜未記錄 ${st.missing}｜執行率 <b>${st.rate ?? '—'}%</b>｜自立支援執行 ${st.selfcare} 次</p>
+  <table class="p-t"><thead><tr><th>項目</th><th>應執行</th><th>完成</th><th>部分</th><th>未執行</th><th>未記錄</th></tr></thead><tbody>${Object.values(st.byItem).map(b => `<tr><td>${esc(b.name)}</td><td>${b.expected}</td><td>${b.done}</td><td>${b.partial}</td><td>${b.skipped}</td><td>${b.missing}</td></tr>`).join('')}</tbody></table>
+  ${meets.length ? `<h4>個案討論會</h4><table class="p-t"><tbody>${meets.map(m => `<tr><th>${rocDate(m.date)}</th><td>${esc((m.cases.find(x => x.clientId === c.id) || {}).discussion || '')}${(m.decisions || []).filter(d => d.clientId === c.id).map(d => `<br>決議：${esc(d.text)}（${esc(d.status || '')}）`).join('')}</td></tr>`).join('')}</tbody></table>` : ''}
+  ${contacts.length ? `<h4>家屬聯繫（近期）</h4><table class="p-t"><tbody>${contacts.map(x => `<tr><th>${rocDate(x.date)}</th><td>${esc(x.method)}｜${esc(x.person || '')}：${esc(x.content || '')}</td></tr>`).join('')}</tbody></table>` : ''}`;
+}
+function printClientDossier(id){ printHTML('個案復能歷程報告', dossierHTML(Store.get('clients', id))); }
+function printSample(){
+  const act = Store.all('clients').filter(c => c.status === '服務中'); if (!act.length) return toast('沒有服務中個案', 'err');
+  const pick = [...act].sort(() => Math.random() - 0.5).slice(0, 3);
+  const html = pick.map((c, i) => { const p = Logic.activePlan(c.id), a = Logic.lastAssessment(c.id); return `<div class="${i ? 'p-break' : ''}"><h3>抽閱個案 ${i + 1}：${esc(c.name)}</h3>${dossierHTML(c)}${a ? `<div class="p-break"><h3>${esc(c.name)}｜最近一次評估</h3>${assessPrintHTML(a)}</div>` : ''}${p ? `<div class="p-break"><h3>${esc(c.name)}｜生效中復能處方</h3>${planPrintHTML(p)}</div>` : ''}</div>`; }).join('');
+  printHTML('評鑑抽閱資料（B1 隨機抽閱三位服務對象）', html);
+}
+function printMeeting(id){
+  const m = Store.get('meetings', id), dis = Logic.meetingDisciplines(m);
+  printHTML('跨專業個案討論會紀錄', `<table class="p-t"><tr><th>日期</th><td>${rocDate(m.date)}</td><th>類型</th><td>${esc(m.type)}</td><th>主席</th><td>${esc(staffName(m.hostId))}</td></tr>
+    <tr><th>出席</th><td colspan="5">${(m.attendees || []).map(id => `${esc(staffName(id))}（${esc(staffRole(id))}）`).join('、')}${(m.external || []).filter(x => x.name).map(x => `、${esc(x.name)}（${esc(x.discipline || '')}）`).join('')}</td></tr>
+    <tr><th>參與專業</th><td colspan="5">${dis.length} 種：${esc(dis.join('、'))}</td></tr></table>
+    <h4>前次決議追蹤</h4>${(m.followups || []).length ? `<table class="p-t"><thead><tr><th>決議</th><th>個案</th><th>負責人</th><th>狀態</th><th>追蹤說明</th></tr></thead><tbody>${m.followups.map(f => `<tr><td>${esc(f.text)}</td><td>${esc(f.clientId ? clientName(f.clientId) : '')}</td><td>${esc(staffName(f.owner))}</td><td>${esc(f.status)}</td><td>${esc(f.note || '')}</td></tr>`).join('')}</tbody></table>` : '<p>無</p>'}
+    <h4>個案討論</h4><table class="p-t"><tbody>${(m.cases || []).map(x => `<tr><th>${esc(clientName(x.clientId))}</th><td>${esc(x.discussion || '')}</td></tr>`).join('')}</tbody></table>
+    ${m.content ? `<h4>其他討論</h4><p>${esc(m.content)}</p>` : ''}
+    <h4>本次決議</h4><table class="p-t"><thead><tr><th>#</th><th>決議事項</th><th>個案</th><th>負責人</th><th>期限</th></tr></thead><tbody>${(m.decisions || []).map((d, i) => `<tr><td>${i + 1}</td><td>${esc(d.text)}</td><td>${esc(d.clientId ? clientName(d.clientId) : '')}</td><td>${esc(staffName(d.owner))}</td><td>${rocDate(d.due)}</td></tr>`).join('')}</tbody></table>
+    ${sign(['紀錄', '主席', '業務負責人'])}`);
+}
+function printIncident(id){
+  const i = Store.get('incidents', id);
+  printHTML('意外事件處理紀錄', `<table class="p-t"><tr><th>發生時間</th><td>${rocDate(i.datetime)} ${(i.datetime || '').slice(11, 16)}</td><th>個案</th><td>${esc(clientName(i.clientId))}</td><th>類型</th><td>${esc(i.type)}</td></tr>
+    <tr><th>地點</th><td>${esc(i.place || '')}</td><th>通報人</th><td>${esc(staffName(i.reporterId))}</td><th>傷害程度</th><td>${esc(i.severity || '')}</td></tr>
+    <tr><th>事件經過</th><td colspan="5">${esc(i.description || '')}</td></tr><tr><th>立即處理</th><td colspan="5">${esc(i.handling || '')}</td></tr>
+    <tr><th>送醫</th><td>${i.toHospital ? '是' : '否'} ${esc(i.hospital || '')}</td><th>送醫前處置</th><td colspan="3">${esc(i.preCare || '')}</td></tr>
+    <tr><th>家屬通知</th><td>${esc((i.familyAt || '').replace('T', ' '))}</td><th>對象/方式</th><td>${esc(i.familyWho || '')}</td><th>家屬回應</th><td>${esc(i.familyNote || '')}</td></tr>
+    <tr><th>原因分析</th><td colspan="5">${esc(i.analysis || '')}</td></tr><tr><th>改善措施</th><td colspan="5">${esc(i.improvement || '')}</td></tr><tr><th>追蹤結果</th><td colspan="5">${esc(i.followUp || '')}</td></tr></table>
+    ${sign(['通報人', '護理師', '業務負責人'])}`);
+}
+function printReport(){ printHTML('評鑑自主檢核表', $('#report-body').innerHTML); }
+
+/* ---- demo.js ---- */
+/* ================================================================
+   示範資料（所有紀錄標記 demo:true，可於設定一鍵清除）
+   ================================================================ */
+function loadDemo(){
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const T = todayISO(), ago = n => addDays(T, -n);
+  const put = (c, o) => Store.upsert(c, { ...o, demo:true });
+  const staff = [['demo_pt', '林○君', '物理治療師'], ['demo_ot', '陳○宏', '職能治療師'], ['demo_rn', '張○玲', '護理師'], ['demo_sw', '李○穎', '社工'], ['demo_cw1', '黃○英', '照顧服務員'], ['demo_cw2', '吳○明', '照顧服務員'], ['demo_dir', '周○○（主任）', '主任/業務負責人']];
+  staff.forEach(([id, name, role]) => { if (!Store.get('staff', id)) put('staff', { id, name, role, active:true }); });
+  if (!Store.DB.meta.center) Store.setMeta('center', '示範日間照顧中心（資料皆為虛構）');
+
+  const C = {
+    wang:{ id:'demo_c1', name:'王○蘭', gender:'女', birth:'1942-03-15', cmsLevel:4, admitDate:ago(135), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'腦中風（右側偏癱）、高血壓', diet:'軟質', aids:'四腳拐', cgName:'王○惠', cgRel:'女兒', cgPhone:'09xx-xxx-111' },
+    chen:{ id:'demo_c2', name:'陳○水', gender:'男', birth:'1938-08-02', cmsLevel:5, admitDate:ago(175), status:'服務中', attendDays:[1, 3, 5], diagnoses:'輕度失智症、高血壓、攝護腺肥大', dementia:true, diet:'一般', aids:'助行器', cgName:'陳○豪', cgRel:'兒子', cgPhone:'09xx-xxx-222' },
+    chang:{ id:'demo_c3', name:'張○雄', gender:'男', birth:'1950-11-20', cmsLevel:6, admitDate:ago(65), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'巴金森氏症、姿勢性低血壓', diet:'細碎', aids:'輪椅（短距離助行器）', cgName:'林○芬', cgRel:'配偶', cgPhone:'09xx-xxx-333' },
+    lin:{ id:'demo_c4', name:'林○玉', gender:'女', birth:'1945-05-09', cmsLevel:3, admitDate:ago(4), status:'服務中', attendDays:[2, 4], diagnoses:'雙膝退化性關節炎、第二型糖尿病', diet:'一般', aids:'', cgName:'林○國', cgRel:'兒子', cgPhone:'09xx-xxx-444' },
+  };
+  Object.values(C).forEach(c => put('clients', c));
+
+  const gdsAns = n => GDS15.map((q, i) => i < n ? q[1] : (q[1] === 'y' ? 'n' : 'y'));
+  const spm = e => SPMSQ.map((q, i) => i >= 10 - e ? 'x' : 'c');
+  function mkA(c, d, type, by, adl, iadl, err, edu, phy, gds, mna, txt, copm, extra = {}){
+    const keys = BARTHEL.map(x => x.k), ik = IADL.map(x => x.k);
+    const a = { clientId:c.id, date:ago(d), type, assessorId:by, adl:Object.fromEntries(keys.map((k, i) => [k, adl[i]])), iadl:Object.fromEntries(ik.map((k, i) => [k, iadl[i]])),
+      spmsq:{ items:spm(err), edu }, gds:gds == null ? Array(15).fill('') : gdsAns(gds), mna:{ A:mna[0], B:mna[1], C:mna[2], D:mna[3], E:mna[4] }, phy, pain:{ nrs:txt.pain || 0, site:txt.site || '' },
+      physio:txt.physio, psycho:txt.psycho, social:txt.social, lifeEvents:txt.life, expect:txt.expect, copm, summary:txt.summary, ...extra };
+    const sg = suggestFromAssessment(a, c); a.problemSel = Object.fromEntries(sg.map(s => [s.code, true])); a.problems = sg; a.customProblems = '';
+    return put('assessments', a);
+  }
+  const item = (id, exId, dose, days, assist, goalId) => { const e = findEx(exId); return { id, exId, name:e.name, cat:e.cat, dose:dose || e.dose, days:days || [1, 2, 3, 4, 5], assist:assist || '', how:e.how, caution:e.caution, selfcare:!!e.selfcare, goalId }; };
+
+  /* 王○蘭：初評 → v1 → 再評 → v2 */
+  const wTxt = { physio:'右側偏癱，右手精細動作差；血壓控制穩定；睡眠可；偶有便秘。', psycho:'意識清楚，情緒穩定，對復健積極；偶因無法自己如廁感到沮喪。', social:'與女兒同住，女兒白天上班；週末由女兒照顧；經濟穩定；過去常參加社區廟宇活動。', life:'一年前中風住院；先生三年前過世。', expect:'希望可以自己上廁所，再去市場買菜。', summary:'右側偏癱，移位與如廁需少量協助，下肢肌力與平衡不足，跌倒風險高。個案動機強，以如廁自立與社區步行為目標。', pain:2, site:'右肩' };
+  const wa1 = mkA(C.wang, 130, '初評', 'demo_pt', [10, 10, 5, 5, 0, 10, 5, 5, 10, 10], [1, 3, 3, 1, 1, 3, 1, 1], 1, 'low', { height:152, weight:55, tug:22.4, tugAid:'四腳拐', oneLeg:1.5, cs30:5, cs5:19, grip:12.5, gait4:8.2 }, 3, [1, 2, 1, 2, 2], wTxt, [{ activity:'自己上廁所', imp:10, perf:3, sat:2 }, { activity:'自己走去市場買菜', imp:8, perf:1, sat:1 }]);
+  const g = ['demo_g1', 'demo_g2', 'demo_g3'];
+  const wGoals = [{ id:g[0], text:'30秒坐站由5次進步至8次', measure:'30秒坐站', baseline:'5次', target:'8次', due:ago(46) }, { id:g[1], text:'在監督下自行完成如廁（含穿脫褲）', measure:'巴氏如廁', baseline:'5分', target:'10分', due:ago(46) }, { id:g[2], text:'使用四腳拐於走廊步行50公尺不需休息', measure:'步行距離', baseline:'20公尺', target:'50公尺', due:ago(46) }];
+  const wItems1 = [item('demo_i1', 'str_sitstand', '8下 × 2組', null, '少量協助(<25%)', g[0]), item('demo_i2', 'bal_chair_oneleg', '每側5秒 × 3次', null, '少量協助(<25%)', g[0]), item('demo_i3', 'adl_toilet', null, null, '監督/口頭提示', g[1]), item('demo_i4', 'end_walk', '20公尺 × 2趟', null, '監督/口頭提示', g[2]), item('demo_i5', 'adl_dress', null, [1, 3, 5], '少量協助(<25%)', g[1])];
+  const wp1 = put('plans', { clientId:C.wang.id, assessmentId:wa1.id, version:1, status:'已修正', startDate:ago(128), endDate:ago(39), reviewDate:ago(44), prescriberId:'demo_pt', problems:wa1.problems.map(p => p.text), longGoal:'能自己拿四腳拐走到社區市場買菜，並能自行如廁。', goals:wGoals, items:wItems1, referrals:[], consent:{ explained:true, by:'個案及女兒', date:ago(128) }, note:'在家每天晚飯後做坐站10下，女兒在旁陪同。' });
+  const wa2 = mkA(C.wang, 40, '再評', 'demo_pt', [10, 10, 5, 10, 0, 10, 5, 10, 10, 10], [1, 3, 3, 1, 1, 3, 1, 1], 1, 'low', { height:152, weight:55.5, tug:17.8, tugAid:'四腳拐', oneLeg:3.2, cs30:7, cs5:15.5, grip:13.5, gait4:6.4 }, 2, [2, 3, 1, 2, 2], { ...wTxt, psycho:'情緒穩定，能自己如廁後自信提升，主動參與團體活動。', summary:'如廁已能在監督下自行完成（目標達成），坐站與步行距離進步但未達標。維持肌力訓練並提高劑量，增加平衡訓練。' }, [{ activity:'自己上廁所', imp:10, perf:7, sat:7 }, { activity:'自己走去市場買菜', imp:8, perf:3, sat:3 }],
+    { goalReview:[{ goalId:g[0], planId:wp1.id, text:wGoals[0].text, measure:'30秒坐站', baseline:'5次', target:'8次', current:'7次', gas:-1, note:'進步2次，接近目標' }, { goalId:g[1], planId:wp1.id, text:wGoals[1].text, measure:'巴氏如廁', baseline:'5分', target:'10分', current:'10分', gas:0, note:'已能監督下自行如廁' }, { goalId:g[2], planId:wp1.id, text:wGoals[2].text, measure:'步行距離', baseline:'20公尺', target:'50公尺', current:'40公尺', gas:-1, note:'中途休息1次' }] });
+  put('plans', { clientId:C.wang.id, assessmentId:wa2.id, version:2, revisedFrom:wp1.id, status:'執行中', startDate:ago(38), reviewDate:addDays(ago(38), DEFAULT_CYCLE_DAYS), prescriberId:'demo_pt', problems:wa2.problems.map(p => p.text), longGoal:'能自己拿四腳拐走到社區市場買菜。',
+    goals:[{ id:g[0], text:'30秒坐站達9次', measure:'30秒坐站', baseline:'7次', target:'9次', due:addDays(ago(38), 84) }, { id:g[2], text:'使用四腳拐步行100公尺不需休息', measure:'步行距離', baseline:'40公尺', target:'100公尺', due:addDays(ago(38), 84) }, { id:'demo_g4', text:'TUG 降至 15 秒以下', measure:'TUG', baseline:'17.8秒', target:'<15秒', due:addDays(ago(38), 84) }],
+    items:[item('demo_i1', 'str_sitstand', '10下 × 3組', null, '監督/口頭提示', g[0]), item('demo_i2', 'bal_chair_oneleg', '每側10秒 × 3次', null, '監督/口頭提示', 'demo_g4'), item('demo_i6', 'bal_tandem', null, [2, 4], '少量協助(<25%)', 'demo_g4'), item('demo_i4', 'end_walk', '40公尺 × 3趟', null, '監督/口頭提示', g[2]), item('demo_i3', 'adl_toilet', null, null, '監督/口頭提示', '')],
+    referrals:[{ to:'營養師評估蛋白質攝取', reason:'握力不足（AWGS 肌少症切點以下）', date:ago(38), result:'建議每餐增加豆魚蛋肉一份，已衛教女兒' }], changeReason:'如廁目標已達成，改為維持；坐站與步行未達標，提高劑量；TUG 仍>13.5秒，新增前後腳站平衡訓練。', consent:{ explained:true, by:'個案及女兒', date:ago(38) }, note:'居家坐站增加為每天2次，每次10下。' });
+
+  /* 陳○水：初評 → v1（再評即將到期） */
+  const ca = mkA(C.chen, 170, '初評', 'demo_ot', [10, 15, 5, 10, 0, 10, 5, 10, 10, 5], [1, 2, 3, 1, 1, 2, 1, 1], 4, 'low', { height:165, weight:60, tug:15.2, tugAid:'助行器', oneLeg:4, cs30:9, cs5:14, grip:24, gait4:5.8 }, null, [2, 3, 2, 2, 1],
+    { physio:'高血壓服藥中；夜尿2–3次；聽力稍差。', psycho:'輕度失智，短期記憶差，易重複問話；午後偶有焦躁。', social:'與兒子媳婦同住，白天獨居；兒子為主要照顧者，照顧壓力中等。', life:'去年由南部搬來與兒子同住。', expect:'家屬希望維持現有能力、減少走失風險；個案喜歡下象棋。', summary:'輕度失智合併下肢肌力下降，服藥與金錢管理需協助。以維持行走能力及認知刺激為主。' }, [{ activity:'跟朋友下象棋', imp:9, perf:5, sat:4 }]);
+  put('plans', { clientId:C.chen.id, assessmentId:ca.id, version:1, status:'執行中', startDate:ago(168), reviewDate:ago(-12), prescriberId:'demo_ot', problems:ca.problems.map(p => p.text), longGoal:'維持獨立行走能力，能參與中心象棋社團。',
+    goals:[{ id:'demo_g5', text:'30秒坐站維持9次以上', measure:'30秒坐站', baseline:'9次', target:'≥9次', due:ago(-12) }, { id:'demo_g6', text:'每週參與2次以上認知活動並完成任務', measure:'參與次數', baseline:'0次', target:'2次/週', due:ago(-12) }],
+    items:[item('demo_i7', 'str_sitstand', '10下 × 2組', [1, 3, 5], '監督/口頭提示', 'demo_g5'), item('demo_i8', 'str_kneeext', null, [1, 3, 5], '監督/口頭提示', 'demo_g5'), item('demo_i9', 'cog_ro', null, [1, 3, 5], '監督/口頭提示', 'demo_g6'), item('demo_i10', 'cog_game', '象棋/配對 20分鐘', [1, 5], '監督/口頭提示', 'demo_g6'), item('demo_i11', 'iadl_meds', null, [3], '少量協助(<25%)', '')],
+    referrals:[{ to:'護理師評估排泄問題', reason:'夜尿、偶有尿失禁', date:ago(167), result:'建議白天定時如廁，傍晚後減少水分' }, { to:'營養師評估蛋白質攝取', reason:'握力不足', date:ago(167), result:'' }], consent:{ explained:true, by:'兒子', date:ago(168) } });
+
+  /* 張○雄：初評（GDS 偏高，需轉介） → v1 */
+  const za = mkA(C.chang, 60, '初評', 'demo_pt', [5, 5, 0, 5, 0, 5, 0, 5, 10, 10], [1, 3, 3, 3, 2, 3, 2, 1], 2, 'high', { height:170, weight:58, tug:28, tugAid:'助行器', oneLeg:0, cs30:4, cs5:'', grip:20, gait4:11, note:'5次坐站無法完成' }, 7, [1, 2, 1, 2, 2],
+    { physio:'巴金森氏症，步態小碎步、起步困難；姿勢性低血壓，站起易頭暈；吞嚥偶嗆咳。', psycho:'認知尚可，情緒低落，常說「拖累家人」，對活動興趣低。', social:'與太太同住，太太72歲為唯一照顧者，負荷重；兒子住外縣市。', life:'半年前因跌倒髖部挫傷住院。', expect:'太太希望他能自己移位，減輕照顧負擔。', summary:'巴金森氏症合併姿勢性低血壓，移位與行走需中度協助，跌倒風險極高，疑似憂鬱。需轉介社工與營養評估。', pain:3, site:'下背' }, [{ activity:'自己從輪椅移到椅子', imp:9, perf:3, sat:2 }]);
+  put('plans', { clientId:C.chang.id, assessmentId:za.id, version:1, status:'執行中', startDate:ago(58), reviewDate:addDays(ago(58), 84), prescriberId:'demo_pt', problems:za.problems.map(p => p.text), longGoal:'能在監督下自行完成輪椅與椅子間移位，減輕太太照顧負擔。',
+    goals:[{ id:'demo_g7', text:'輪椅↔椅子移位由中度協助進步至少量協助', measure:'移位協助程度', baseline:'中度協助', target:'少量協助', due:addDays(ago(58), 84) }, { id:'demo_g8', text:'30秒坐站由4次進步至7次', measure:'30秒坐站', baseline:'4次', target:'7次', due:addDays(ago(58), 84) }],
+    items:[item('demo_i12', 'adl_transfer', null, null, '中度協助(25–50%)', 'demo_g7'), item('demo_i13', 'str_sitstand', '5下 × 2組', null, '中度協助(25–50%)', 'demo_g8'), item('demo_i14', 'oral_exercise', null, null, '監督/口頭提示', ''), item('demo_i15', 'psy_role', '每日發點心', [1, 3, 5], '監督/口頭提示', '')],
+    referrals:[{ to:'社工', reason:'疑似憂鬱情緒（GDS-15＝7）、照顧者負荷', date:ago(57), result:'社工每週關懷1次，已連結家庭照顧者支持服務' }, { to:'語言治療師', reason:'吞嚥偶嗆咳', date:ago(57), result:'' }], consent:{ explained:true, by:'太太', date:ago(58) }, note:'起身前先坐在床邊30秒再站起，預防頭暈。' });
+
+  /* 執行紀錄與出席體溫 */
+  const notes = ['今天精神很好，主動要求多做一組', '動作較慢，需多次提示', '做完說腳有點痠', '願意自己嘗試，進步明顯', '午睡後執行，配合度佳'];
+  for (const c of [C.wang, C.chen, C.chang]) {
+    for (let d = Logic.plansOf(c.id)[0].startDate; d <= T; d = addDays(d, 1)) {
+      if (!c.attendDays.includes(weekday(d))) continue;
+      const present = rnd() > 0.08;
+      put('vitals', { clientId:c.id, date:d, present, temp:present && (d < T || rnd() > 0.5) ? Math.round((36 + rnd() * 1.1) * 10) / 10 : '' });
+      if (!present || d === T) continue;
+      const plan = Logic.planOn(c.id, d);
+      for (const it of Logic.itemsOn(plan, d)) {
+        if (rnd() < 0.04) continue; // 少量漏記
+        const r = rnd(), st = r < 0.76 ? '完成' : r < 0.9 ? '部分' : '未執行';
+        const e = { clientId:c.id, itemId:it.id, date:d, status:st, planId:plan.id, itemName:it.name, cat:it.cat, staffId:rnd() > 0.5 ? 'demo_cw1' : 'demo_cw2', assist:it.assist, tolerance:st === '完成' ? (rnd() > 0.2 ? '良好' : '尚可') : '疲累', amount:st === '完成' ? it.dose : '', ack:{ by:'demo_pt', at:d } };
+        if (st === '未執行') e.reason = SKIP_REASONS[Math.floor(rnd() * 4) + 1];
+        if (rnd() < 0.08) e.note = notes[Math.floor(rnd() * notes.length)];
+        put('execs', e);
+      }
+    }
+  }
+  const yd = (() => { let d = addDays(T, -1); while (!C.chang.attendDays.includes(weekday(d))) d = addDays(d, -1); return d; })();
+  const ex = Store.all('execs').find(e => e.clientId === C.chang.id && e.itemId === 'demo_i13' && e.date === yd);
+  if (ex) { ex.status = '部分'; ex.tolerance = '不適停止'; ex.flag = true; ex.note = '第2組站起時頭暈、臉色蒼白，量血壓 92/58，已坐下休息並通知護理師'; delete ex.ack; Store.upsert('execs', ex); }
+
+  /* 討論會 */
+  const m1 = put('meetings', { date:ago(165), type:'定期跨專業個案討論會', hostId:'demo_dir', attendees:['demo_dir', 'demo_pt', 'demo_ot', 'demo_rn', 'demo_sw', 'demo_cw1'], external:[], followups:[], content:'',
+    cases:[{ clientId:C.chen.id, discussion:'OT：新收案，輕度失智，午後焦躁。RN：夜尿多影響睡眠。SW：兒子照顧壓力中等。' }, { clientId:C.wang.id, discussion:'PT：坐站進步中，如廁仍需協助穿褲。照服員：長輩很配合。' }],
+    decisions:[{ id:'demo_d1', clientId:C.chen.id, text:'午後安排象棋活動，觀察焦躁是否改善', owner:'demo_ot', due:ago(135), status:'已完成', followNote:'焦躁次數減少' }, { id:'demo_d2', clientId:C.wang.id, text:'如廁時改為口頭提示，讓長輩自行穿脫褲', owner:'demo_cw1', due:ago(135), status:'已完成' }] });
+  put('meetings', { date:ago(75), type:'定期跨專業個案討論會', hostId:'demo_dir', attendees:['demo_dir', 'demo_pt', 'demo_ot', 'demo_rn', 'demo_sw', 'demo_cw2'], external:[{ name:'吳○○（特約營養師）', discipline:'營養師' }],
+    followups:[{ meetingId:m1.id, decisionId:'demo_d1', text:'午後安排象棋活動，觀察焦躁是否改善', clientId:C.chen.id, owner:'demo_ot', status:'已完成', note:'焦躁次數由每週3次降為1次' }, { meetingId:m1.id, decisionId:'demo_d2', text:'如廁時改為口頭提示，讓長輩自行穿脫褲', clientId:C.wang.id, owner:'demo_cw1', status:'已完成', note:'已可監督下自行完成' }],
+    cases:[{ clientId:C.wang.id, discussion:'PT：如廁目標接近達成，預計下月再評。' }, { clientId:C.chen.id, discussion:'RN：血壓穩定。SW：兒子表示希望學習居家練習方式。' }],
+    decisions:[{ id:'demo_d3', clientId:C.chen.id, text:'提供兒子居家坐站與現實導向練習衛教單張', owner:'demo_sw', due:ago(45), status:'待執行' }, { id:'demo_d4', clientId:C.wang.id, text:'安排再評估並修正處方', owner:'demo_pt', due:ago(35), status:'已完成' }] });
+
+  /* 意外事件 */
+  put('incidents', { datetime:ago(50) + 'T10:20', clientId:C.chang.id, type:'跌倒', place:'廁所', reporterId:'demo_cw2', severity:'輕度（瘀青擦傷）', description:'如廁後自行起身時頭暈，滑坐於地，左手肘擦傷。', handling:'協助坐回輪椅，測量血壓 90/56，護理師清潔傷口。', toHospital:false, familyAt:ago(50) + 'T10:45', familyWho:'太太／電話', familyNote:'了解，同意觀察', analysis:'姿勢性低血壓＋起身過快；廁所扶手位置偏遠。', improvement:'處方加入「起身前坐30秒」提示；廁所加裝L型扶手；如廁改為近身監督。', followUp:'兩週內無再發生。', closed:true });
+  put('incidents', { datetime:ago(20) + 'T14:05', clientId:C.chen.id, type:'外傷/瘀傷', place:'活動區', reporterId:'demo_cw1', severity:'輕度（瘀青擦傷）', description:'推助行器轉彎時右小腿撞到桌腳，有瘀青。', handling:'冰敷15分鐘，護理師評估無腫脹。', toHospital:false, familyAt:ago(20) + 'T15:00', familyWho:'兒子／LINE', closed:false });
+
+  /* 活動與訓練 */
+  const acts = ['懷舊老歌合唱', '手作香包', '社區公園散步', '園藝療育', '節慶包粽子', '桌遊大賽', '律動健身操', '中秋同樂會', '社區國小交流', '寫春聯', '端午香包', '母親節卡片'];
+  for (let k = 11; k >= 0; k--) { if (k === 4) continue; const d = addDays(addMonths(T.slice(0, 7) + '-10', -k), 0); if (d > T) continue; put('activities', { date:d, kind:k % 3 === 0 ? '社區活動' : '團體活動', title:acts[k], nature:['動態', '靜態', '輔療'][k % 3], leaderId:'demo_sw', clientIds:[C.wang.id, C.chen.id].concat(d >= C.chang.admitDate ? [C.chang.id] : []), content:'長輩參與踴躍。', strategy:'邀請熟識長輩同組' }); }
+  put('activities', { date:ago(100), kind:'照顧者支持活動', title:'家屬座談：居家復能小撇步', leaderId:'demo_pt', clientIds:[], familyCount:8, content:'PT 示範居家坐站與移位技巧，家屬實際演練。' });
+  const allS = ['demo_pt', 'demo_ot', 'demo_rn', 'demo_sw', 'demo_cw1', 'demo_cw2', 'demo_dir'];
+  const yr = T.slice(0, 4);
+  [['感染管制與手部衛生', 2, true, false, allS], ['失智症照護實務', 8, false, false, allS], ['安全移位與下肢肌力訓練', 6, false, true, allS], ['CPR＋AED 急救訓練', 4, false, false, allS.filter(x => x !== 'demo_cw2')]].forEach(([title, hours, inf, sc, ids], i) => put('activities', { date:`${yr}-0${i + 3}-15`, kind:'員工教育訓練', title, hours, infection:inf, selfcareTopic:sc, staffIds:ids, org:'縣市長照管理中心' }));
+
+  /* 家屬聯繫 */
+  put('contacts', { clientId:C.wang.id, date:ago(20), method:'LINE/通訊軟體', person:'女兒 王○惠', content:'告知 v2 處方調整，請家中每天2次坐站練習；女兒回饋媽媽在家已能自己上廁所。', staffId:'demo_pt' });
+  put('contacts', { clientId:C.chen.id, date:ago(100), method:'電話', person:'兒子 陳○豪', content:'說明父親午後焦躁改善情形。', staffId:'demo_sw' });
+  put('contacts', { clientId:C.chang.id, date:ago(30), method:'面談', person:'太太 林○芬', content:'說明移位訓練進度，教導起身前先坐30秒。太太表示照顧壓力大，已轉介照顧者支持服務。', staffId:'demo_sw' });
+
+  if (!App.currentUserId()) try { localStorage.setItem('rehab:user', 'demo_pt'); } catch(e){}
+  Store.flush(); toast('已載入示範資料'); renderShell(); App.go('#/'); route();
+}
+
+</script>
+<!-- 公版「錯誤／建議」回報按鈕（通報進共用試算表，「網站」欄位＝日照復能管理系統） -->
+<script>
+/* 回報時自動帶入：目前頁面＋技術資訊（裝置、筆數、最近錯誤；不含個案姓名或任何紀錄內容） */
+window.__errs=[]; window.addEventListener('error',e=>{ window.__errs.push(String(e.message).slice(0,120)); if(window.__errs.length>5) window.__errs.shift(); });
+window.REPORT_CONTEXT=()=>{
+  let tech=''; try{
+    const page=(location.hash||'#/').replace(/\/[a-z0-9_]{8,}/gi,'/…').split('?')[0];
+    const n=c=>Store.all(c).length;
+    tech=`頁面 ${page}；畫面 ${innerWidth}×${innerHeight}；${navigator.userAgent.slice(0,120)}；個案 ${n('clients')}／評估 ${n('assessments')}／處方 ${n('plans')}／執行 ${n('execs')} 筆${window.__errs.length?'；最近錯誤：'+window.__errs.join(' | '):''}`;
+  }catch(e){}
+  return {item:(document.querySelector('#top-title b')||{}).textContent||'', itemName:tech.slice(0,600)};
+};
+/* 縮小成角落小圓鈕：滑過或聚焦才展開文字 */
+window.addEventListener('load',()=>{
+  const host=document.querySelector('[data-oth-report]'); if(!host||!host.shadowRoot) return;
+  const st=document.createElement('style');
+  st.textContent=`.fab{width:34px;height:34px;padding:0;gap:0;justify-content:center;font-size:0;opacity:.72;right:14px;
+      box-shadow:0 2px 8px rgba(0,0,0,.14),0 0 0 1.5px #2f7d5b inset;transition:opacity .2s}
+    .fab:hover,.fab:focus-visible{opacity:1;width:auto;padding:0 12px;gap:6px;font-size:12.5px}
+    .fab svg{width:15px;height:15px}
+    @media (max-width:760px){.fab{right:10px}}`;
+  host.shadowRoot.appendChild(st);
+  const fab=host.shadowRoot.querySelector('.fab'); if(fab){fab.title='回報錯誤或建議';fab.setAttribute('aria-label','回報錯誤或建議');}
+});
+</script>
+<script src="https://mattsue1003.github.io/oth-report-button/report.js" data-site="日照復能管理系統" data-color="#2f7d5b" data-label="錯誤／建議" data-offset="16" defer></script>
+</body>
+</html>
