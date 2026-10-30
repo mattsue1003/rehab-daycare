@@ -140,6 +140,9 @@ textarea.inp{resize:vertical}
 .tprog{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);margin:10px 0 4px}.tprog .bar{flex:1;margin:0}
 .items{list-style:none;margin:0;padding:0}
 .it{border-top:1px solid var(--line);padding:10px 0}
+.anthro{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--warn-l)}.anthro.ok{background:var(--surface2)}
+.an-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.an-h small{font-size:13px}
+.an-b{display:flex;gap:14px;flex-wrap:wrap}.an-b .temp small{margin-left:4px}.an-f{font-size:13px;margin-top:6px}
 .it-main{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .it-t{flex:1;min-width:160px}.it-t b{font-size:16px}.it-t small{display:block;color:var(--muted);font-size:13px}.it-t .badge{margin-left:6px}
 .it-b{display:flex;gap:6px}

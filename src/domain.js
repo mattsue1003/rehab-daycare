@@ -66,6 +66,14 @@ function mnaLevel(t){ if(t==null) return ''; if(t>=12) return '營養狀況正�
 // 30秒坐站：低於此次數＝低於同齡平均（Rikli & Jones；CDC STEADI）
 const CS30_NORM = { M:[[60,14],[65,12],[70,12],[75,11],[80,10],[85,8],[90,7]], F:[[60,12],[65,11],[70,10],[75,10],[80,9],[85,8],[90,4]] };
 function cs30Cut(age, sex){ const t=CS30_NORM[sex==='男'?'M':'F']; let c=t[0][1]; for(const [a,v] of t){ if(age>=a) c=v; } return c; }
+// 體位量測（無法量體重者每月追蹤）：小腿圍 <31cm（MNA-SF F2）；AWGS 2019 肌少症篩檢 男<34、女<33；臂中圍 <22cm（MNA 營養不良風險）
+const ANTHRO_CUT = { calf:31, calfM:34, calfF:33, mac:22 };
+function anthroFlags(c, r){
+  const f = [];
+  if (r?.calf !== '' && r?.calf != null) { if (+r.calf < ANTHRO_CUT.calf) f.push('小腿圍<31cm，營養不良風險'); else if (+r.calf < (c?.gender === '男' ? ANTHRO_CUT.calfM : ANTHRO_CUT.calfF)) f.push('小腿圍低於 AWGS 肌少症篩檢切點'); }
+  if (r?.mac !== '' && r?.mac != null && +r.mac < ANTHRO_CUT.mac) f.push('臂中圍<22cm，營養不良風險');
+  return f;
+}
 const PHY_CUT = { tug:13.5, gripM:28, gripF:18, gait:1.0, oneLeg:5, cs5:12 }; // TUG≥13.5s 跌倒風險；AWGS 2019 肌少症切點
 
 /* ---------- 復能處方庫 ---------- */
