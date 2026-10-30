@@ -183,7 +183,7 @@ function pageReports(){
   const oc = Logic.outcomes();
   return `<div class="notice">以下為系統依登錄資料自動檢核的<b>自主檢核參考</b>，實際分數以評鑑委員文件檢閱與現場訪談為準。服務中個案 <b>${active.length}</b> 位。</div>
   <div class="toolbar">${btn('隨機抽3位個案列印評鑑資料', 'printSample()', { k:'primary', i:'print' })}${btn('列印本頁檢核表', 'printReport()', { i:'print' })}<span class="sp"></span>
-    ${btn('個案名冊', 'csvClients()', { k:'sm', i:'download' })}${btn('評估總表', 'csvAssess()', { k:'sm', i:'download' })}${btn('處方總表', 'csvPlans()', { k:'sm', i:'download' })}${btn('執行紀錄', 'csvExecs()', { k:'sm', i:'download' })}${btn('體溫紀錄', 'csvVitals()', { k:'sm', i:'download' })}${btn('臂中圍/小腿圍', 'csvAnthro()', { k:'sm', i:'download' })}</div>
+    ${btn('個案名冊', 'csvClients()', { k:'sm', i:'download' })}${btn('評估總表', 'csvAssess()', { k:'sm', i:'download' })}${btn('處方總表', 'csvPlans()', { k:'sm', i:'download' })}${btn('執行紀錄', 'csvExecs()', { k:'sm', i:'download' })}${btn('體溫紀錄', 'csvVitals()', { k:'sm', i:'download' })}</div>
   <div id="report-body">
   ${card('B1', b1.map(([ok, d], i) => [ok, INDICATORS.B1.items[i], d.length ? '未符合：' + d.join('、') : '']), ` <small>符合 ${b1n}/6 項，預估 <b>${b1pts}</b>/2.5 分</small>`)}
   <div class="grid2">
@@ -217,7 +217,6 @@ function csvClients(){ exportCSV('個案名冊_' + todayISO() + '.csv', ['姓名
 function csvAssess(){ exportCSV('評估總表_' + todayISO() + '.csv', ['個案', '日期', '類別', '評估者', '巴氏', 'IADL', 'SPMSQ錯題', 'TUG秒', '單腳站秒', '30秒坐站', '5次坐站秒', '握力kg', '步速m/s', 'BMI', 'GDS15', 'MNA-SF', '疼痛NRS', '問題'], Store.all('assessments').sort(byDate('date')).map(a => [clientName(a.clientId), a.date, a.type, staffName(a.assessorId), scoreBarthel(a)?.total, scoreIADL(a)?.total, scoreSPMSQ(a)?.errors, a.phy?.tug, a.phy?.oneLeg, a.phy?.cs30, a.phy?.cs5, a.phy?.grip, gaitSpeed(a), calcBMI(a), scoreGDS(a)?.total, scoreMNA(a)?.total, a.pain?.nrs, (a.problems || []).map(p => p.text).join('；')])); }
 function csvPlans(){ const rows = []; Store.all('plans').forEach(p => (p.items || []).forEach(it => rows.push([clientName(p.clientId), 'v' + p.version, p.status, p.startDate, p.endDate || '', p.reviewDate, staffName(p.prescriberId), it.name, it.cat, it.dose, (it.days || []).map(w => WEEKDAYS[w]).join(''), it.assist, it.selfcare ? '是' : '', p.changeReason || '']))); exportCSV('處方總表_' + todayISO() + '.csv', ['個案', '版本', '狀態', '生效日', '結束日', '預定再評', '開立人', '項目', '類別', '劑量', '執行日', '目標協助', '自立支援', '修正理由'], rows); }
 function csvExecs(){ exportCSV('執行紀錄_' + todayISO() + '.csv', ['日期', '個案', '項目', '類別', '狀態', '未執行原因', '協助程度', '耐受度', '實際量', '觀察', '執行人'], Store.all('execs').sort(byDate('date')).map(e => [e.date, clientName(e.clientId), e.itemName, e.cat, e.status, e.reason, e.assist, e.tolerance, e.amount, e.note, staffName(e.staffId || e.updatedBy)])); }
-function csvAnthro(){ exportCSV('體位量測_' + todayISO() + '.csv', ['日期', '個案', '臂中圍cm', '小腿圍cm', '提醒', '量測人'], Store.all('anthro').sort(byDate('date')).map(r => [r.date, clientName(r.clientId), r.mac, r.calf, anthroFlags(Store.get('clients', r.clientId), r).join('；'), staffName(r.staffId)])); }
 function csvVitals(){ exportCSV('出席體溫_' + todayISO() + '.csv', ['日期', '個案', '出席', '體溫'], Store.all('vitals').sort(byDate('date')).map(v => [v.date, clientName(v.clientId), v.present === true ? '出席' : v.present === false ? '請假' : '', v.temp])); }
 
 /* ---------------- 設定與備份 ---------------- */

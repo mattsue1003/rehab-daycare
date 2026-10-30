@@ -12,7 +12,7 @@ function loadDemo(){
   const C = {
     wang:{ id:'demo_c1', name:'王○蘭', gender:'女', birth:'1942-03-15', cmsLevel:4, admitDate:ago(135), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'腦中風（右側偏癱）、高血壓', diet:'軟質', aids:'四腳拐', cgName:'王○惠', cgRel:'女兒', cgPhone:'09xx-xxx-111' },
     chen:{ id:'demo_c2', name:'陳○水', gender:'男', birth:'1938-08-02', cmsLevel:5, admitDate:ago(175), status:'服務中', attendDays:[1, 3, 5], diagnoses:'輕度失智症、高血壓、攝護腺肥大', dementia:true, diet:'一般', aids:'助行器', cgName:'陳○豪', cgRel:'兒子', cgPhone:'09xx-xxx-222' },
-    chang:{ id:'demo_c3', name:'張○雄', gender:'男', birth:'1950-11-20', cmsLevel:6, admitDate:ago(65), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'巴金森氏症、姿勢性低血壓', diet:'細碎', aids:'輪椅（短距離助行器）', noWeight:true, cgName:'林○芬', cgRel:'配偶', cgPhone:'09xx-xxx-333' },
+    chang:{ id:'demo_c3', name:'張○雄', gender:'男', birth:'1950-11-20', cmsLevel:6, admitDate:ago(65), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'巴金森氏症、姿勢性低血壓', diet:'細碎', aids:'輪椅（短距離助行器）', cgName:'林○芬', cgRel:'配偶', cgPhone:'09xx-xxx-333' },
     lin:{ id:'demo_c4', name:'林○玉', gender:'女', birth:'1945-05-09', cmsLevel:3, admitDate:ago(4), status:'服務中', attendDays:[2, 4], diagnoses:'雙膝退化性關節炎、第二型糖尿病', diet:'一般', aids:'', cgName:'林○國', cgRel:'兒子', cgPhone:'09xx-xxx-444' },
   };
   Object.values(C).forEach(c => put('clients', c));
@@ -90,10 +90,6 @@ function loadDemo(){
     followups:[{ meetingId:m1.id, decisionId:'demo_d1', text:'午後安排象棋活動，觀察焦躁是否改善', clientId:C.chen.id, owner:'demo_ot', status:'已完成', note:'焦躁次數由每週3次降為1次' }, { meetingId:m1.id, decisionId:'demo_d2', text:'如廁時改為口頭提示，讓長輩自行穿脫褲', clientId:C.wang.id, owner:'demo_cw1', status:'已完成', note:'已可監督下自行完成' }],
     cases:[{ clientId:C.wang.id, discussion:'PT：如廁目標接近達成，預計下月再評。' }, { clientId:C.chen.id, discussion:'RN：血壓穩定。SW：兒子表示希望學習居家練習方式。' }],
     decisions:[{ id:'demo_d3', clientId:C.chen.id, text:'提供兒子居家坐站與現實導向練習衛教單張', owner:'demo_sw', due:ago(45), status:'待執行' }, { id:'demo_d4', clientId:C.wang.id, text:'安排再評估並修正處方', owner:'demo_pt', due:ago(35), status:'已完成' }] });
-
-  /* 每月臂中圍／小腿圍（張○雄無法站立量體重；本月留給使用者試填） */
-  put('anthro', { clientId:C.chang.id, date:addDays(addMonths(T.slice(0, 7) + '-01', -2), 4), mac:23.0, calf:31.5, staffId:'demo_rn' });
-  put('anthro', { clientId:C.chang.id, date:addDays(addMonths(T.slice(0, 7) + '-01', -1), 4), mac:22.4, calf:30.8, staffId:'demo_rn' });
 
   /* 意外事件 */
   put('incidents', { datetime:ago(50) + 'T10:20', clientId:C.chang.id, type:'跌倒', place:'廁所', reporterId:'demo_cw2', severity:'輕度（瘀青擦傷）', description:'如廁後自行起身時頭暈，滑坐於地，左手肘擦傷。', handling:'協助坐回輪椅，測量血壓 90/56，護理師清潔傷口。', toHospital:false, familyAt:ago(50) + 'T10:45', familyWho:'太太／電話', familyNote:'了解，同意觀察', analysis:'姿勢性低血壓＋起身過快；廁所扶手位置偏遠。', improvement:'處方加入「起身前坐30秒」提示；廁所加裝L型扶手；如廁改為近身監督。', followUp:'兩週內無再發生。', closed:true });

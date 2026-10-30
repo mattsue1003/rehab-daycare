@@ -148,9 +148,6 @@ textarea.inp{resize:vertical}
 .tprog{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);margin:10px 0 4px}.tprog .bar{flex:1;margin:0}
 .items{list-style:none;margin:0;padding:0}
 .it{border-top:1px solid var(--line);padding:10px 0}
-.anthro{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--warn-l)}.anthro.ok{background:var(--surface2)}
-.an-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.an-h small{font-size:13px}
-.an-b{display:flex;gap:14px;flex-wrap:wrap}.an-b .temp small{margin-left:4px}.an-f{font-size:13px;margin-top:6px}
 .it-main{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .it-t{flex:1;min-width:160px}.it-t b{font-size:16px}.it-t small{display:block;color:var(--muted);font-size:13px}.it-t .badge{margin-left:6px}
 .it-b{display:flex;gap:6px}
@@ -324,14 +321,6 @@ function mnaLevel(t){ if(t==null) return ''; if(t>=12) return '營養狀況正�
 // 30秒坐站：低於此次數＝低於同齡平均（Rikli & Jones；CDC STEADI）
 const CS30_NORM = { M:[[60,14],[65,12],[70,12],[75,11],[80,10],[85,8],[90,7]], F:[[60,12],[65,11],[70,10],[75,10],[80,9],[85,8],[90,4]] };
 function cs30Cut(age, sex){ const t=CS30_NORM[sex==='男'?'M':'F']; let c=t[0][1]; for(const [a,v] of t){ if(age>=a) c=v; } return c; }
-// 體位量測（無法量體重者每月追蹤）：小腿圍 <31cm（MNA-SF F2）；AWGS 2019 肌少症篩檢 男<34、女<33；臂中圍 <22cm（MNA 營養不良風險）
-const ANTHRO_CUT = { calf:31, calfM:34, calfF:33, mac:22 };
-function anthroFlags(c, r){
-  const f = [];
-  if (r?.calf !== '' && r?.calf != null) { if (+r.calf < ANTHRO_CUT.calf) f.push('小腿圍<31cm，營養不良風險'); else if (+r.calf < (c?.gender === '男' ? ANTHRO_CUT.calfM : ANTHRO_CUT.calfF)) f.push('小腿圍低於 AWGS 肌少症篩檢切點'); }
-  if (r?.mac !== '' && r?.mac != null && +r.mac < ANTHRO_CUT.mac) f.push('臂中圍<22cm，營養不良風險');
-  return f;
-}
 const PHY_CUT = { tug:13.5, gripM:28, gripF:18, gait:1.0, oneLeg:5, cs5:12 }; // TUG≥13.5s 跌倒風險；AWGS 2019 肌少症切點
 
 /* ---------- 復能處方庫 ---------- */
@@ -443,7 +432,7 @@ const INDICATORS = {
    資料層：IndexedDB（失敗時退回 localStorage），所有資料只存在本機
    每筆紀錄含 id / updatedAt / updatedBy，刪除採軟刪除，方便多台裝置合併
    ================================================================ */
-const COLLECTIONS = ['staff','clients','assessments','plans','execs','vitals','meetings','incidents','activities','contacts','library','anthro'];
+const COLLECTIONS = ['staff','clients','assessments','plans','execs','vitals','meetings','incidents','activities','contacts','library'];
 
 const Store = (() => {
   const DB = { meta:{} };
@@ -918,8 +907,6 @@ function pageDashboard(){
       else if (d <= 21) todo.push({ lv:'mid', t:`${c.name}：${d} 天後需再評估（${rocDate(ck.reassessDue.date)}）`, a:`<a class="btn sm" href="#/assess/new/${c.id}/再評">進行再評</a>` });
     }
     if (ck.last && !ck.referralOK) todo.push({ lv:'mid', t:`${c.name}：評估顯示需轉介（${ck.flagged.map(f => f.referral).join('；')}），處方尚無轉介紀錄`, a:`<a class="btn sm" href="#/plan/${ck.plan?.id || ''}">補轉介</a>` });
-    if (c.noWeight && !(anthroCur(c.id, today)?.mac && anthroCur(c.id, today)?.calf)) todo.push({ lv:'low', t:`${c.name}：本月尚未量測臂中圍／小腿圍（無法量測體重）`, a:`<a class="btn sm" href="#/today">前往量測</a>` });
-    else if (c.noWeight && anthroFlags(c, anthroCur(c.id, today)).length) todo.push({ lv:'mid', t:`${c.name}：本月${anthroFlags(c, anthroCur(c.id, today)).join('；')}`, a:`<a class="btn sm" href="${link}/outcome">查看趨勢</a>` });
     if ((ck.lastContact ? diffDays(ck.lastContact, today) : diffDays(c.admitDate || today, today)) > 90) todo.push({ lv:'low', t:`${c.name}：超過3個月未有家屬聯繫紀錄（B8）`, a:`<a class="btn sm" href="${link}/contacts">新增聯繫</a>` });
   }
   const lm = Logic.lastMeeting();
@@ -982,7 +969,6 @@ function pageToday(){
           <label class="temp ${tempWarn ? 'warn' : ''}">體溫<input type="number" step="0.1" min="34" max="42" inputmode="decimal" value="${esc(v?.temp ?? '')}" onchange="setTemp('${c.id}',this.value)" aria-label="${esc(c.name)} 體溫">°C</label>
         </div>
       </header>
-      ${!absent && (c.noWeight || anthroCur(c.id, d)) ? anthroRow(c, d) : ''}
       ${absent ? '<div class="muted pad">今日請假，不需執行處方。</div>' : !plan ? '<div class="muted pad">尚無生效中的復能處方。</div>' : !items.length ? '<div class="muted pad">今日（星期' + WEEKDAYS[w] + '）沒有排定的處方項目。</div>' : `
       <div class="tprog"><span>${done}/${items.length} 已記錄</span><div class="bar"><i style="width:${pct(done, items.length)}%"></i></div></div>
       <ul class="items">${items.map(it => execRow(c, it, plan, d, idx)).join('')}</ul>`}
@@ -1027,27 +1013,6 @@ function execRow(c, it, plan, d, idx){
       <label class="chk"><input type="checkbox" ${e?.flag ? 'checked' : ''} onchange="patchExec('${c.id}','${it.id}','flag',this.checked)"><span>需治療師/護理師注意（會出現在總覽提醒）</span></label>
     </div>` : ''}
   </li>`;
-}
-/* 每月體位量測（臂中圍、小腿圍；無法量體重者） */
-const anthroOf = cid => Store.all('anthro').filter(x => x.clientId === cid).sort(byDate('date'));
-const anthroCur = (cid, d) => anthroOf(cid).find(x => x.date.slice(0, 7) === d.slice(0, 7));
-function anthroRow(c, d){
-  const cur = anthroCur(c.id, d), prev = anthroOf(c.id).filter(x => x.date.slice(0, 7) < d.slice(0, 7)).at(-1);
-  const flags = anthroFlags(c, cur), done = cur && cur.mac !== '' && cur.mac != null && cur.calf !== '' && cur.calf != null;
-  const delta = k => cur && prev && cur[k] !== '' && cur[k] != null && prev[k] !== '' && prev[k] != null ? ` <small class="${+cur[k] < +prev[k] ? 'warn-t' : 'muted'}">${+cur[k] - +prev[k] > 0 ? '+' : ''}${Math.round((+cur[k] - +prev[k]) * 10) / 10}</small>` : '';
-  const inp = (k, label) => `<label class="temp ${cur && anthroFlags(c, { [k]:cur[k] }).length ? 'warn' : ''}">${label}<input type="number" step="0.1" min="10" max="60" inputmode="decimal" value="${esc(cur?.[k] ?? '')}" onchange="setAnthro('${c.id}','${k}',this.value)" aria-label="${esc(c.name)} ${label}">cm${delta(k)}</label>`;
-  return `<div class="anthro ${done ? 'ok' : ''}"><div class="an-h"><b>每月體位量測</b> ${done ? badge('本月已量測 ' + rocDate(cur.date).slice(-5), 'green') : badge('本月尚未量測', 'amber')}
-    ${prev ? `<small class="muted">上次 ${rocDate(prev.date)}：臂中圍 ${prev.mac ?? '—'}、小腿圍 ${prev.calf ?? '—'} cm</small>` : ''}</div>
-    <div class="an-b">${inp('mac', '臂中圍')}${inp('calf', '小腿圍')}</div>
-    ${flags.length ? `<div class="warn-t an-f">⚠ ${flags.join('；')}，請通知護理師/營養師</div>` : ''}</div>`;
-}
-function setAnthro(cid, k, v){
-  const d = S.todayDate, c = Store.get('clients', cid);
-  const r = anthroCur(cid, d) || { clientId:cid, date:d };
-  r[k] = v === '' ? '' : +v; r.date = d; r.staffId = App.currentUserId();
-  Store.upsert('anthro', r);
-  const f = anthroFlags(c, { [k]:r[k] }); if (f.length) toast(`${c.name}：${f.join('；')}`, 'err');
-  refreshTodayCard(cid);
 }
 function findExec(cid, iid, d){ return Store.all('execs').find(e => e.clientId === cid && e.itemId === iid && e.date === d); }
 function markExec(cid, iid, status){
@@ -1127,7 +1092,6 @@ function editClient(id){
     ${F.field('失智症', F.check('dementia', '已確診失智症'))}
     ${F.field('飲食質地', F.select('diet', ['一般', '軟質', '細碎', '泥狀', '流質', '管灌']))}
     ${F.field('使用輔具', F.input('aids', { ph:'例：四腳拐、輪椅、助行器' }))}
-    ${F.field('體重量測', F.check('noWeight', '無法量測體重（每月改量臂中圍、小腿圍）'))}
     ${F.field('過敏／特殊注意', F.input('allergy'))}
     ${F.field('主要照顧者', F.input('cgName'))}
     ${F.field('關係', F.input('cgRel', { ph:'例：女兒' }))}
@@ -1169,7 +1133,7 @@ function clientOverview(c){
   return `<div class="grid2">
     <section class="card"><h2>基本資料</h2>${infoGrid([
       ['收案日', rocDate(c.admitDate)], ['狀態', esc(c.status)], ['到班日', (c.attendDays || []).map(w => '週' + WEEKDAYS[w]).join('、')],
-      ['診斷', esc(c.diagnoses)], ['失智症', c.dementia ? '是' : '否'], ['飲食質地', esc(c.diet)], ['輔具', esc(c.aids)], ['過敏/注意', esc(c.allergy)], ['體位量測', c.noWeight ? (() => { const a = anthroOf(c.id).at(-1); return '每月量臂中圍、小腿圍' + (a ? `（${rocDate(a.date)}：${a.mac ?? '—'} / ${a.calf ?? '—'} cm）` : '（尚無紀錄）'); })() : '一般（量體重）'],
+      ['診斷', esc(c.diagnoses)], ['失智症', c.dementia ? '是' : '否'], ['飲食質地', esc(c.diet)], ['輔具', esc(c.aids)], ['過敏/注意', esc(c.allergy)],
       ['主要照顧者', esc([c.cgName, c.cgRel].filter(Boolean).join('／'))], ['電話', esc(c.cgPhone)]])}</section>
     <section class="card"><h2>評鑑 B1 個案檢核</h2><ul class="checks">
       ${chk(!!last, '已完成需求評估', last ? rocDate(last.date) + ' ' + last.type : '')}
@@ -1244,8 +1208,6 @@ function clientOutcome(c){
     ['握力（公斤）', pts(a => a.phy?.grip), { min:0, cut:c.gender === '男' ? PHY_CUT.gripM : PHY_CUT.gripF, cutLabel:'AWGS 切點' }],
     ['步行速度（公尺/秒）', pts(a => gaitSpeed(a)), { min:0, cut:PHY_CUT.gait, cutLabel:'1.0 m/s' }],
   ];
-  const an = anthroOf(c.id);
-  if (an.length) charts.push(['臂中圍（公分，每月）', an.map(x => ({ x:x.date, y:x.mac })), { cut:ANTHRO_CUT.mac, cutLabel:'營養風險 22cm' }], ['小腿圍（公分，每月）', an.map(x => ({ x:x.date, y:x.calf })), { cut:ANTHRO_CUT.calf, cutLabel:'營養風險 31cm' }]);
   const reviews = as.flatMap(a => (a.goalReview || []).map(g => ({ ...g, date:a.date })));
   const copm = as.filter(a => (a.copm || []).some(x => x.activity));
   return `<div class="charts">${charts.map(([t, p, o]) => `<section class="card"><h3>${t}</h3>${lineChart(p, { ...o, title:t })}</section>`).join('')}</div>
@@ -1290,8 +1252,6 @@ function newAssessment(cid, type){
     physio:prev?.physio || '', psycho:prev?.psycho || '', social:prev?.social || '', lifeEvents:prev?.lifeEvents || '', expect:prev?.expect || '',
     copm:prev?.copm?.length ? prev.copm.filter(x => x.activity).map(x => ({ activity:x.activity, imp:x.imp, perf:'', sat:'' })) : [{}, {}, {}],
     problemSel:{}, customProblems:'', summary:'', carried:!!prev };
-  const an = anthroOf(cid).at(-1);
-  if (an && an.calf !== '' && an.calf != null && diffDays(an.date, todayISO()) <= 31) a.mna.calf = an.calf;
   if (plan && type !== '初評') a.goalReview = (plan.goals || []).map(g => ({ goalId:g.id, planId:plan.id, text:g.text, measure:g.measure, baseline:g.baseline, target:g.target, current:'', gas:'', note:'' }));
   return a;
 }
@@ -1327,7 +1287,7 @@ function pageAssessEdit(id, cid, type){
   </div>`;
   const gds = `<p class="hint">中、重度失智者可不施測。依長輩「過去一週」的感受回答。</p><table class="tbl qa"><tbody>${GDS15.map(([q], i) => `<tr><td>${i + 1}. ${q}</td><td>${F.radios('gds.' + i, [['y', '是'], ['n', '否']])}</td></tr>`).join('')}</tbody></table>`;
   const mna = MNASF.map(it => `<div class="q"><div class="qh"><b>${it.k}. ${it.n}</b></div>${F.radios('mna.' + it.k, it.opts.map(([s, d]) => [s, `${d}（${s}）`]), { t:'num' })}</div>`).join('') +
-    `<div class="q"><div class="qh"><b>F. BMI 或小腿圍</b></div><p class="hint">已填身高體重會自動以 BMI 計分；無法量體重時填小腿圍（會自動帶入近一個月的每月量測值）。</p>${F.field('小腿圍（公分）', F.num('mna.calf'))}</div>`;
+    `<div class="q"><div class="qh"><b>F. BMI 或小腿圍</b></div><p class="hint">已填身高體重會自動以 BMI 計分；無法量體重時填小腿圍。</p>${F.field('小腿圍（公分）', F.num('mna.calf'))}</div>`;
   const pain = `<div class="form-grid">${F.field('疼痛程度 NRS（0 不痛～10 最痛）', F.radios('pain.nrs', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [n, String(n)]), { t:'num' }), { cls:'span2' })}${F.field('疼痛部位/影響', F.input('pain.site'), { cls:'span2' })}</div>`;
   const psy = `${a.carried && !id ? '<div class="notice">已帶入前次內容，請依現況更新。</div>' : ''}<div class="form-grid">
     ${F.field('生理狀況', F.text('physio', { ph:'疾病、用藥、視力聽力、睡眠、排泄、皮膚、吞嚥…' }), { cls:'span2' })}
@@ -1719,7 +1679,7 @@ function pageReports(){
   const oc = Logic.outcomes();
   return `<div class="notice">以下為系統依登錄資料自動檢核的<b>自主檢核參考</b>，實際分數以評鑑委員文件檢閱與現場訪談為準。服務中個案 <b>${active.length}</b> 位。</div>
   <div class="toolbar">${btn('隨機抽3位個案列印評鑑資料', 'printSample()', { k:'primary', i:'print' })}${btn('列印本頁檢核表', 'printReport()', { i:'print' })}<span class="sp"></span>
-    ${btn('個案名冊', 'csvClients()', { k:'sm', i:'download' })}${btn('評估總表', 'csvAssess()', { k:'sm', i:'download' })}${btn('處方總表', 'csvPlans()', { k:'sm', i:'download' })}${btn('執行紀錄', 'csvExecs()', { k:'sm', i:'download' })}${btn('體溫紀錄', 'csvVitals()', { k:'sm', i:'download' })}${btn('臂中圍/小腿圍', 'csvAnthro()', { k:'sm', i:'download' })}</div>
+    ${btn('個案名冊', 'csvClients()', { k:'sm', i:'download' })}${btn('評估總表', 'csvAssess()', { k:'sm', i:'download' })}${btn('處方總表', 'csvPlans()', { k:'sm', i:'download' })}${btn('執行紀錄', 'csvExecs()', { k:'sm', i:'download' })}${btn('體溫紀錄', 'csvVitals()', { k:'sm', i:'download' })}</div>
   <div id="report-body">
   ${card('B1', b1.map(([ok, d], i) => [ok, INDICATORS.B1.items[i], d.length ? '未符合：' + d.join('、') : '']), ` <small>符合 ${b1n}/6 項，預估 <b>${b1pts}</b>/2.5 分</small>`)}
   <div class="grid2">
@@ -1753,7 +1713,6 @@ function csvClients(){ exportCSV('個案名冊_' + todayISO() + '.csv', ['姓名
 function csvAssess(){ exportCSV('評估總表_' + todayISO() + '.csv', ['個案', '日期', '類別', '評估者', '巴氏', 'IADL', 'SPMSQ錯題', 'TUG秒', '單腳站秒', '30秒坐站', '5次坐站秒', '握力kg', '步速m/s', 'BMI', 'GDS15', 'MNA-SF', '疼痛NRS', '問題'], Store.all('assessments').sort(byDate('date')).map(a => [clientName(a.clientId), a.date, a.type, staffName(a.assessorId), scoreBarthel(a)?.total, scoreIADL(a)?.total, scoreSPMSQ(a)?.errors, a.phy?.tug, a.phy?.oneLeg, a.phy?.cs30, a.phy?.cs5, a.phy?.grip, gaitSpeed(a), calcBMI(a), scoreGDS(a)?.total, scoreMNA(a)?.total, a.pain?.nrs, (a.problems || []).map(p => p.text).join('；')])); }
 function csvPlans(){ const rows = []; Store.all('plans').forEach(p => (p.items || []).forEach(it => rows.push([clientName(p.clientId), 'v' + p.version, p.status, p.startDate, p.endDate || '', p.reviewDate, staffName(p.prescriberId), it.name, it.cat, it.dose, (it.days || []).map(w => WEEKDAYS[w]).join(''), it.assist, it.selfcare ? '是' : '', p.changeReason || '']))); exportCSV('處方總表_' + todayISO() + '.csv', ['個案', '版本', '狀態', '生效日', '結束日', '預定再評', '開立人', '項目', '類別', '劑量', '執行日', '目標協助', '自立支援', '修正理由'], rows); }
 function csvExecs(){ exportCSV('執行紀錄_' + todayISO() + '.csv', ['日期', '個案', '項目', '類別', '狀態', '未執行原因', '協助程度', '耐受度', '實際量', '觀察', '執行人'], Store.all('execs').sort(byDate('date')).map(e => [e.date, clientName(e.clientId), e.itemName, e.cat, e.status, e.reason, e.assist, e.tolerance, e.amount, e.note, staffName(e.staffId || e.updatedBy)])); }
-function csvAnthro(){ exportCSV('體位量測_' + todayISO() + '.csv', ['日期', '個案', '臂中圍cm', '小腿圍cm', '提醒', '量測人'], Store.all('anthro').sort(byDate('date')).map(r => [r.date, clientName(r.clientId), r.mac, r.calf, anthroFlags(Store.get('clients', r.clientId), r).join('；'), staffName(r.staffId)])); }
 function csvVitals(){ exportCSV('出席體溫_' + todayISO() + '.csv', ['日期', '個案', '出席', '體溫'], Store.all('vitals').sort(byDate('date')).map(v => [v.date, clientName(v.clientId), v.present === true ? '出席' : v.present === false ? '請假' : '', v.temp])); }
 
 /* ---------------- 設定與備份 ---------------- */
@@ -1867,7 +1826,6 @@ function dossierHTML(c){
   return `${pClientHead(c)}
   <h4>評估歷程</h4><table class="p-t"><thead><tr><th>日期</th><th>類別</th><th>評估者</th><th>巴氏</th><th>IADL</th><th>SPMSQ錯</th><th>TUG</th><th>30秒坐站</th><th>握力</th><th>步速</th><th>GDS</th><th>MNA</th></tr></thead><tbody>${as.map(a => `<tr><td>${rocDate(a.date)}</td><td>${esc(a.type)}</td><td>${esc(staffName(a.assessorId))}</td><td>${scoreBarthel(a)?.total ?? ''}</td><td>${scoreIADL(a)?.total ?? ''}</td><td>${scoreSPMSQ(a)?.errors ?? ''}</td><td>${a.phy?.tug || ''}</td><td>${a.phy?.cs30 ?? ''}</td><td>${a.phy?.grip || ''}</td><td>${gaitSpeed(a) ?? ''}</td><td>${scoreGDS(a)?.total ?? ''}</td><td>${scoreMNA(a)?.total ?? ''}</td></tr>`).join('')}</tbody></table>
   <div class="p-charts"><div><b>巴氏量表</b>${lineChart(pts(a => scoreBarthel(a)?.partial ? null : scoreBarthel(a)?.total), { min:0, max:100 })}</div><div><b>30秒坐站</b>${lineChart(pts(a => a.phy?.cs30), { min:0 })}</div><div><b>TUG（秒）</b>${lineChart(pts(a => a.phy?.tug), { cut:13.5 })}</div></div>
-  ${anthroOf(c.id).length ? `<h4>每月體位量測（臂中圍／小腿圍）</h4><table class="p-t"><thead><tr><th>日期</th><th>臂中圍 cm</th><th>小腿圍 cm</th><th>提醒</th></tr></thead><tbody>${anthroOf(c.id).slice(-12).map(r => `<tr><td>${rocDate(r.date)}</td><td>${r.mac ?? ''}</td><td>${r.calf ?? ''}</td><td>${esc(anthroFlags(c, r).join('；'))}</td></tr>`).join('')}</tbody></table>` : ''}
   <h4>處方版本歷程</h4><table class="p-t"><thead><tr><th>版本</th><th>期間</th><th>開立</th><th>項目</th><th>修正理由</th></tr></thead><tbody>${ps.map(p => `<tr><td>v${p.version}<br>${esc(p.status)}</td><td>${rocDate(p.startDate)}～${p.endDate ? rocDate(p.endDate) : ''}</td><td>${esc(staffName(p.prescriberId))}</td><td>${(p.items || []).map(i => esc(i.name)).join('、')}</td><td>${esc(p.changeReason || '')}</td></tr>`).join('')}</tbody></table>
   <h4>近90天執行狀況</h4><p>應執行 ${st.expected} 次｜完成 ${st.done}｜部分 ${st.partial}｜未執行 ${st.skipped}｜未記錄 ${st.missing}｜執行率 <b>${st.rate ?? '—'}%</b>｜自立支援執行 ${st.selfcare} 次</p>
   <table class="p-t"><thead><tr><th>項目</th><th>應執行</th><th>完成</th><th>部分</th><th>未執行</th><th>未記錄</th></tr></thead><tbody>${Object.values(st.byItem).map(b => `<tr><td>${esc(b.name)}</td><td>${b.expected}</td><td>${b.done}</td><td>${b.partial}</td><td>${b.skipped}</td><td>${b.missing}</td></tr>`).join('')}</tbody></table>
@@ -1919,7 +1877,7 @@ function loadDemo(){
   const C = {
     wang:{ id:'demo_c1', name:'王○蘭', gender:'女', birth:'1942-03-15', cmsLevel:4, admitDate:ago(135), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'腦中風（右側偏癱）、高血壓', diet:'軟質', aids:'四腳拐', cgName:'王○惠', cgRel:'女兒', cgPhone:'09xx-xxx-111' },
     chen:{ id:'demo_c2', name:'陳○水', gender:'男', birth:'1938-08-02', cmsLevel:5, admitDate:ago(175), status:'服務中', attendDays:[1, 3, 5], diagnoses:'輕度失智症、高血壓、攝護腺肥大', dementia:true, diet:'一般', aids:'助行器', cgName:'陳○豪', cgRel:'兒子', cgPhone:'09xx-xxx-222' },
-    chang:{ id:'demo_c3', name:'張○雄', gender:'男', birth:'1950-11-20', cmsLevel:6, admitDate:ago(65), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'巴金森氏症、姿勢性低血壓', diet:'細碎', aids:'輪椅（短距離助行器）', noWeight:true, cgName:'林○芬', cgRel:'配偶', cgPhone:'09xx-xxx-333' },
+    chang:{ id:'demo_c3', name:'張○雄', gender:'男', birth:'1950-11-20', cmsLevel:6, admitDate:ago(65), status:'服務中', attendDays:[1, 2, 3, 4, 5], diagnoses:'巴金森氏症、姿勢性低血壓', diet:'細碎', aids:'輪椅（短距離助行器）', cgName:'林○芬', cgRel:'配偶', cgPhone:'09xx-xxx-333' },
     lin:{ id:'demo_c4', name:'林○玉', gender:'女', birth:'1945-05-09', cmsLevel:3, admitDate:ago(4), status:'服務中', attendDays:[2, 4], diagnoses:'雙膝退化性關節炎、第二型糖尿病', diet:'一般', aids:'', cgName:'林○國', cgRel:'兒子', cgPhone:'09xx-xxx-444' },
   };
   Object.values(C).forEach(c => put('clients', c));
@@ -1997,10 +1955,6 @@ function loadDemo(){
     followups:[{ meetingId:m1.id, decisionId:'demo_d1', text:'午後安排象棋活動，觀察焦躁是否改善', clientId:C.chen.id, owner:'demo_ot', status:'已完成', note:'焦躁次數由每週3次降為1次' }, { meetingId:m1.id, decisionId:'demo_d2', text:'如廁時改為口頭提示，讓長輩自行穿脫褲', clientId:C.wang.id, owner:'demo_cw1', status:'已完成', note:'已可監督下自行完成' }],
     cases:[{ clientId:C.wang.id, discussion:'PT：如廁目標接近達成，預計下月再評。' }, { clientId:C.chen.id, discussion:'RN：血壓穩定。SW：兒子表示希望學習居家練習方式。' }],
     decisions:[{ id:'demo_d3', clientId:C.chen.id, text:'提供兒子居家坐站與現實導向練習衛教單張', owner:'demo_sw', due:ago(45), status:'待執行' }, { id:'demo_d4', clientId:C.wang.id, text:'安排再評估並修正處方', owner:'demo_pt', due:ago(35), status:'已完成' }] });
-
-  /* 每月臂中圍／小腿圍（張○雄無法站立量體重；本月留給使用者試填） */
-  put('anthro', { clientId:C.chang.id, date:addDays(addMonths(T.slice(0, 7) + '-01', -2), 4), mac:23.0, calf:31.5, staffId:'demo_rn' });
-  put('anthro', { clientId:C.chang.id, date:addDays(addMonths(T.slice(0, 7) + '-01', -1), 4), mac:22.4, calf:30.8, staffId:'demo_rn' });
 
   /* 意外事件 */
   put('incidents', { datetime:ago(50) + 'T10:20', clientId:C.chang.id, type:'跌倒', place:'廁所', reporterId:'demo_cw2', severity:'輕度（瘀青擦傷）', description:'如廁後自行起身時頭暈，滑坐於地，左手肘擦傷。', handling:'協助坐回輪椅，測量血壓 90/56，護理師清潔傷口。', toHospital:false, familyAt:ago(50) + 'T10:45', familyWho:'太太／電話', familyNote:'了解，同意觀察', analysis:'姿勢性低血壓＋起身過快；廁所扶手位置偏遠。', improvement:'處方加入「起身前坐30秒」提示；廁所加裝L型扶手；如廁改為近身監督。', followUp:'兩週內無再發生。', closed:true });

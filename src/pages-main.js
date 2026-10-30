@@ -21,8 +21,6 @@ function pageDashboard(){
       else if (d <= 21) todo.push({ lv:'mid', t:`${c.name}：${d} 天後需再評估（${rocDate(ck.reassessDue.date)}）`, a:`<a class="btn sm" href="#/assess/new/${c.id}/再評">進行再評</a>` });
     }
     if (ck.last && !ck.referralOK) todo.push({ lv:'mid', t:`${c.name}：評估顯示需轉介（${ck.flagged.map(f => f.referral).join('；')}），處方尚無轉介紀錄`, a:`<a class="btn sm" href="#/plan/${ck.plan?.id || ''}">補轉介</a>` });
-    if (c.noWeight && !(anthroCur(c.id, today)?.mac && anthroCur(c.id, today)?.calf)) todo.push({ lv:'low', t:`${c.name}：本月尚未量測臂中圍／小腿圍（無法量測體重）`, a:`<a class="btn sm" href="#/today">前往量測</a>` });
-    else if (c.noWeight && anthroFlags(c, anthroCur(c.id, today)).length) todo.push({ lv:'mid', t:`${c.name}：本月${anthroFlags(c, anthroCur(c.id, today)).join('；')}`, a:`<a class="btn sm" href="${link}/outcome">查看趨勢</a>` });
     if ((ck.lastContact ? diffDays(ck.lastContact, today) : diffDays(c.admitDate || today, today)) > 90) todo.push({ lv:'low', t:`${c.name}：超過3個月未有家屬聯繫紀錄（B8）`, a:`<a class="btn sm" href="${link}/contacts">新增聯繫</a>` });
   }
   const lm = Logic.lastMeeting();
@@ -85,7 +83,6 @@ function pageToday(){
           <label class="temp ${tempWarn ? 'warn' : ''}">體溫<input type="number" step="0.1" min="34" max="42" inputmode="decimal" value="${esc(v?.temp ?? '')}" onchange="setTemp('${c.id}',this.value)" aria-label="${esc(c.name)} 體溫">°C</label>
         </div>
       </header>
-      ${!absent && (c.noWeight || anthroCur(c.id, d)) ? anthroRow(c, d) : ''}
       ${absent ? '<div class="muted pad">今日請假，不需執行處方。</div>' : !plan ? '<div class="muted pad">尚無生效中的復能處方。</div>' : !items.length ? '<div class="muted pad">今日（星期' + WEEKDAYS[w] + '）沒有排定的處方項目。</div>' : `
       <div class="tprog"><span>${done}/${items.length} 已記錄</span><div class="bar"><i style="width:${pct(done, items.length)}%"></i></div></div>
       <ul class="items">${items.map(it => execRow(c, it, plan, d, idx)).join('')}</ul>`}
@@ -130,27 +127,6 @@ function execRow(c, it, plan, d, idx){
       <label class="chk"><input type="checkbox" ${e?.flag ? 'checked' : ''} onchange="patchExec('${c.id}','${it.id}','flag',this.checked)"><span>需治療師/護理師注意（會出現在總覽提醒）</span></label>
     </div>` : ''}
   </li>`;
-}
-/* 每月體位量測（臂中圍、小腿圍；無法量體重者） */
-const anthroOf = cid => Store.all('anthro').filter(x => x.clientId === cid).sort(byDate('date'));
-const anthroCur = (cid, d) => anthroOf(cid).find(x => x.date.slice(0, 7) === d.slice(0, 7));
-function anthroRow(c, d){
-  const cur = anthroCur(c.id, d), prev = anthroOf(c.id).filter(x => x.date.slice(0, 7) < d.slice(0, 7)).at(-1);
-  const flags = anthroFlags(c, cur), done = cur && cur.mac !== '' && cur.mac != null && cur.calf !== '' && cur.calf != null;
-  const delta = k => cur && prev && cur[k] !== '' && cur[k] != null && prev[k] !== '' && prev[k] != null ? ` <small class="${+cur[k] < +prev[k] ? 'warn-t' : 'muted'}">${+cur[k] - +prev[k] > 0 ? '+' : ''}${Math.round((+cur[k] - +prev[k]) * 10) / 10}</small>` : '';
-  const inp = (k, label) => `<label class="temp ${cur && anthroFlags(c, { [k]:cur[k] }).length ? 'warn' : ''}">${label}<input type="number" step="0.1" min="10" max="60" inputmode="decimal" value="${esc(cur?.[k] ?? '')}" onchange="setAnthro('${c.id}','${k}',this.value)" aria-label="${esc(c.name)} ${label}">cm${delta(k)}</label>`;
-  return `<div class="anthro ${done ? 'ok' : ''}"><div class="an-h"><b>每月體位量測</b> ${done ? badge('本月已量測 ' + rocDate(cur.date).slice(-5), 'green') : badge('本月尚未量測', 'amber')}
-    ${prev ? `<small class="muted">上次 ${rocDate(prev.date)}：臂中圍 ${prev.mac ?? '—'}、小腿圍 ${prev.calf ?? '—'} cm</small>` : ''}</div>
-    <div class="an-b">${inp('mac', '臂中圍')}${inp('calf', '小腿圍')}</div>
-    ${flags.length ? `<div class="warn-t an-f">⚠ ${flags.join('；')}，請通知護理師/營養師</div>` : ''}</div>`;
-}
-function setAnthro(cid, k, v){
-  const d = S.todayDate, c = Store.get('clients', cid);
-  const r = anthroCur(cid, d) || { clientId:cid, date:d };
-  r[k] = v === '' ? '' : +v; r.date = d; r.staffId = App.currentUserId();
-  Store.upsert('anthro', r);
-  const f = anthroFlags(c, { [k]:r[k] }); if (f.length) toast(`${c.name}：${f.join('；')}`, 'err');
-  refreshTodayCard(cid);
 }
 function findExec(cid, iid, d){ return Store.all('execs').find(e => e.clientId === cid && e.itemId === iid && e.date === d); }
 function markExec(cid, iid, status){
@@ -230,7 +206,6 @@ function editClient(id){
     ${F.field('失智症', F.check('dementia', '已確診失智症'))}
     ${F.field('飲食質地', F.select('diet', ['一般', '軟質', '細碎', '泥狀', '流質', '管灌']))}
     ${F.field('使用輔具', F.input('aids', { ph:'例：四腳拐、輪椅、助行器' }))}
-    ${F.field('體重量測', F.check('noWeight', '無法量測體重（每月改量臂中圍、小腿圍）'))}
     ${F.field('過敏／特殊注意', F.input('allergy'))}
     ${F.field('主要照顧者', F.input('cgName'))}
     ${F.field('關係', F.input('cgRel', { ph:'例：女兒' }))}
@@ -272,7 +247,7 @@ function clientOverview(c){
   return `<div class="grid2">
     <section class="card"><h2>基本資料</h2>${infoGrid([
       ['收案日', rocDate(c.admitDate)], ['狀態', esc(c.status)], ['到班日', (c.attendDays || []).map(w => '週' + WEEKDAYS[w]).join('、')],
-      ['診斷', esc(c.diagnoses)], ['失智症', c.dementia ? '是' : '否'], ['飲食質地', esc(c.diet)], ['輔具', esc(c.aids)], ['過敏/注意', esc(c.allergy)], ['體位量測', c.noWeight ? (() => { const a = anthroOf(c.id).at(-1); return '每月量臂中圍、小腿圍' + (a ? `（${rocDate(a.date)}：${a.mac ?? '—'} / ${a.calf ?? '—'} cm）` : '（尚無紀錄）'); })() : '一般（量體重）'],
+      ['診斷', esc(c.diagnoses)], ['失智症', c.dementia ? '是' : '否'], ['飲食質地', esc(c.diet)], ['輔具', esc(c.aids)], ['過敏/注意', esc(c.allergy)],
       ['主要照顧者', esc([c.cgName, c.cgRel].filter(Boolean).join('／'))], ['電話', esc(c.cgPhone)]])}</section>
     <section class="card"><h2>評鑑 B1 個案檢核</h2><ul class="checks">
       ${chk(!!last, '已完成需求評估', last ? rocDate(last.date) + ' ' + last.type : '')}
@@ -347,8 +322,6 @@ function clientOutcome(c){
     ['握力（公斤）', pts(a => a.phy?.grip), { min:0, cut:c.gender === '男' ? PHY_CUT.gripM : PHY_CUT.gripF, cutLabel:'AWGS 切點' }],
     ['步行速度（公尺/秒）', pts(a => gaitSpeed(a)), { min:0, cut:PHY_CUT.gait, cutLabel:'1.0 m/s' }],
   ];
-  const an = anthroOf(c.id);
-  if (an.length) charts.push(['臂中圍（公分，每月）', an.map(x => ({ x:x.date, y:x.mac })), { cut:ANTHRO_CUT.mac, cutLabel:'營養風險 22cm' }], ['小腿圍（公分，每月）', an.map(x => ({ x:x.date, y:x.calf })), { cut:ANTHRO_CUT.calf, cutLabel:'營養風險 31cm' }]);
   const reviews = as.flatMap(a => (a.goalReview || []).map(g => ({ ...g, date:a.date })));
   const copm = as.filter(a => (a.copm || []).some(x => x.activity));
   return `<div class="charts">${charts.map(([t, p, o]) => `<section class="card"><h3>${t}</h3>${lineChart(p, { ...o, title:t })}</section>`).join('')}</div>

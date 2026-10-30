@@ -15,8 +15,6 @@ function newAssessment(cid, type){
     physio:prev?.physio || '', psycho:prev?.psycho || '', social:prev?.social || '', lifeEvents:prev?.lifeEvents || '', expect:prev?.expect || '',
     copm:prev?.copm?.length ? prev.copm.filter(x => x.activity).map(x => ({ activity:x.activity, imp:x.imp, perf:'', sat:'' })) : [{}, {}, {}],
     problemSel:{}, customProblems:'', summary:'', carried:!!prev };
-  const an = anthroOf(cid).at(-1);
-  if (an && an.calf !== '' && an.calf != null && diffDays(an.date, todayISO()) <= 31) a.mna.calf = an.calf;
   if (plan && type !== '初評') a.goalReview = (plan.goals || []).map(g => ({ goalId:g.id, planId:plan.id, text:g.text, measure:g.measure, baseline:g.baseline, target:g.target, current:'', gas:'', note:'' }));
   return a;
 }
@@ -52,7 +50,7 @@ function pageAssessEdit(id, cid, type){
   </div>`;
   const gds = `<p class="hint">中、重度失智者可不施測。依長輩「過去一週」的感受回答。</p><table class="tbl qa"><tbody>${GDS15.map(([q], i) => `<tr><td>${i + 1}. ${q}</td><td>${F.radios('gds.' + i, [['y', '是'], ['n', '否']])}</td></tr>`).join('')}</tbody></table>`;
   const mna = MNASF.map(it => `<div class="q"><div class="qh"><b>${it.k}. ${it.n}</b></div>${F.radios('mna.' + it.k, it.opts.map(([s, d]) => [s, `${d}（${s}）`]), { t:'num' })}</div>`).join('') +
-    `<div class="q"><div class="qh"><b>F. BMI 或小腿圍</b></div><p class="hint">已填身高體重會自動以 BMI 計分；無法量體重時填小腿圍（會自動帶入近一個月的每月量測值）。</p>${F.field('小腿圍（公分）', F.num('mna.calf'))}</div>`;
+    `<div class="q"><div class="qh"><b>F. BMI 或小腿圍</b></div><p class="hint">已填身高體重會自動以 BMI 計分；無法量體重時填小腿圍。</p>${F.field('小腿圍（公分）', F.num('mna.calf'))}</div>`;
   const pain = `<div class="form-grid">${F.field('疼痛程度 NRS（0 不痛～10 最痛）', F.radios('pain.nrs', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [n, String(n)]), { t:'num' }), { cls:'span2' })}${F.field('疼痛部位/影響', F.input('pain.site'), { cls:'span2' })}</div>`;
   const psy = `${a.carried && !id ? '<div class="notice">已帶入前次內容，請依現況更新。</div>' : ''}<div class="form-grid">
     ${F.field('生理狀況', F.text('physio', { ph:'疾病、用藥、視力聽力、睡眠、排泄、皮膚、吞嚥…' }), { cls:'span2' })}
